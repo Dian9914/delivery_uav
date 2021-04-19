@@ -9,5 +9,15 @@
 
 El UAV debe ser capaz de soltar la carga en un punto dado con seguridad.
 
+## Pasos a seguir
+ * Instalar y aprender a usar grvc UAL. DONE
+ * Crear/encontrar entorno de simulación.
+ * Instalar y aprender a usar LIDAR.
+ * Buscar como simular el paquete.
+ * Crear actuador para descargar el paquete.
+ * Montarlo todo en un UAV.
+ * Planificación, mapa y SLAM.
+ * Percepción y reacción al entorno.
+
 *Memoria:* https://www.overleaf.com/9276811915dkmgjbqhfcdw
 
