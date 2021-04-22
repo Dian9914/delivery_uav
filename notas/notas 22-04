@@ -1,0 +1,90 @@
+tutoriales de stage: http://wiki.ros.org/stage/Tutorials
+Para el error de que no encuentra laser: https://answers.ros.org/question/33973/stage-error-in-fuerte/
+
+Siguiente paso: Investigar por mi cuenta
+Otro tutorial (incluye cosas de gazebo también): https://moodle2018-19.ua.es/moodle/mod/book/tool/print/index.php?id=8465
+
+He instalado ros-kinetic-turtlebot-gazebo y ros-kinetic-turtlebot-stage
+Da un error al instalar realsense-camera, que se soluciona aqui: http://wiki.ros.org/librealsense#Installation_Prerequisites
+
+SLAM: creando mapa con datos obtenidos (viene del tuto de stage): http://wiki.ros.org/slam_gmapping/Tutorials/MappingFromLoggedData
+
+
+
+--- INFO DEL LÁSER ----
+- Definición: En simulation.world, se define una funcion del tipo ranger, y dentro al laser le damos los valores range (valor mínimo y máximo que puede leer) y fov (amplitud del sensor en grados), ademas de las muestras que toma por segundo.
+
+- Datos: Se publican en el topic /base_scan, es un mensaje del tipo sensor_msgs/LaserScan, reporta a 10 Hz consta de los siguientes elementos:
+ * Valor mínimo, máximo e incrementos del ángulo que barre el láser, en radianes (angle_min, angle_max, angle_increment)
+ * Valor máximo y mínimo de distancia que puede leer el láser (en las unidades que sea) (range_min y range_max)
+ * Para cada medición en el ángulo de barrido, la intensidad del laser (relacionado con laser no ideal) (intensities)
+ * Los valores leidos en cada instante para cada ángulo (ranges), yendo en sentido antihorario 
+ * Desconocidos: scan_time y time_increment
+
+
+Luego, ejemplo avanzado de stageros (tutorial 3 de stage wiki):
+hacer esto primero:
+"export TURTLEBOT_STAGE_WORLD_FILE=/opt/ros/kinetic/share/turtlebot_stage/maps/stage/maze.world"
+"export TURTLEBOT_STAGE_MAP_FILE=/opt/ros/kinetic/share/turtlebot_stage/maps/maze.yaml"
+merece la pena si hace falta analizar con detalle lo que esta pasando aqui
+
+
+
+creo que no merece la pena pelearnos con stage
+paso siguiente: tuto 5 de stage, para ver como rviz interpreta los datos de los sensores
+(paso pendiente, leer el documento de UAL, puede tener la respuesta de si mavros o no)
+
+el tuto 5 es un entorno de simulacion basico ideal para probar el laser y cualquier algoritmo relacionado, el control podemos usar el go_to_goal.py del planner y incluso podemos usar planificacion? no podemos porque busca un csv
+
+en rviz podemos detectar que se esta usando un laser y mostrar su informacion, me imagino que lo que hace es obtener los topics
+
+en este mapa no tenemos un archivo csv que defina donde están los obstaculos, pero el sensor los detecta. Esto es, porque estamos usando un archivo pgm en su lugar
+
+nodo para mapas en ros, y tambien para guardar el mapa generado como pgm: http://wiki.ros.org/map_server ---PROBAR ESTO---
+tambien para cargar mapas en ros (alternativa a cargar el csv en python, ---BUSCAR--- herramienta que genere csv quizas)
+Este paquete se incluye dentro de los relacionados con navigation, que incluyen muchos otros paquetes en los que podemos basarnos
+Busca pgm ros y te saldran multitud de tutoriales, me imagino que buscando mapping with ros te saldran mas aun
+
+Instalado: ros-kinetic-turtlebot3-*, paquete util para jugar con el
+
+
+
+
+Siguiente paso: probar como de diferente se ven mavros y gazebo-light
+El backend de gazebo-light usa un modelo dinamico simplificado, mientras que mavros es el modelo completo
+UAL incluye tambien otros modelos de drones, mirar como configurarlos
+En la pagina 8 se incluyen los estados en los que UAL considera que está el UAV
+
+Parece que el mbzirc de mavros no monta un lidar, por lo que habria que añadirlo
+---BUSCAR--- documentacion de esto, de px4, mavros, mbzirc o lo que sea esto
+---BUSCAR--- como modificar el robot, parece que hay un plugin de lidar en mavros? mirar px4_bringup/config/px4_config.yaml
+---BUSCAR--- meter plugin lidar en mavros en vez de en gazebo
+aeroarms parece ser el unico modelo que no funciona
+
+UAL -> backend -> MAVROS -> PX4
+
+
+documentacion de mavros/px4: https://docs.px4.io/master/en/simulation/ros_interface.html
+https://docs.px4.io/master/en/simulation/gazebo.html
+recuerda instalar los paquetes de mavros, los que no lo hayan hecho
+
+nuestro trabajo en tfg: http://bibing.us.es/proyectos/abreproy/91484/fichero/TFG_PabloGomezCambroneroMartin.pdf
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
