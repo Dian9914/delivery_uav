@@ -37,5 +37,22 @@ Pasos a seguir:
 6. rosservice call /gazebo_2Dmap_plugin/generate_map
 7. rosrun map_server map_saver -f test /map:=/map2d <- esto genera el mapa en 2D con las preferencias establecidas
 
+Otro tutorial que podría haber seguido es: http://gazebosim.org/tutorials?tut=ros_plugins&cat=connect_ros
+(incluye como añadir plugin usando catkin correctamente y como añadir path de plugins y demás)
+También se pueden usar plugins propios: http://gazebosim.org/tutorials/?cat=write_plugin
 
-A continuación, echo un vistazo a los plugins en 3d
+Como nota adicional, el plugin que uso viene basado en un plugin similar pero de octomap (3d), por lo que quizas se podria adaptar
+
+A continuación, echo un vistazo a los plugins en 3d, mas concretamente el plugin octomap (http://wiki.ros.org/octomap_server)
+Para generar un octomap de un mundo es tan simple como https://github.com/ethz-asl/rotors_simulator/wiki/Generate-an-octomap-from-your-world
+(necesita instalar este paquete o los siguientes archivos)
+https://github.com/ethz-asl/rotors_simulator/blob/master/rotors_gazebo_plugins/include/rotors_gazebo_plugins/gazebo_octomap_plugin.h
+https://github.com/ethz-asl/rotors_simulator/blob/master/rotors_gazebo_plugins/src/gazebo_octomap_plugin.cpp
+
+--BUSCAR-- como comparar 2 mapas en 3D
+--- FIN EXPLICACION MAPA---
+
+
+A continuación, voy a probar como usar el plugin de lidar, usando el tutorial http://gazebosim.org/tutorials?tut=ros_gzplugins&cat=connect_ros
+
+Mañana ver como integrarlo en el dron

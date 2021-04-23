@@ -105,5 +105,6 @@
     <init_robot_x>0</init_robot_x>          <!-- x coordinate in meters, optional, default 0 -->
     <init_robot_y>0</init_robot_y>          <!-- y coordinate in meters, optional, default 0 -->
   </plugin>
+  <!-- <plugin name='gazebo_octomap' filename='librotors_gazebo_octomap_plugin.so'/> -->
   </world>
 </sdf>
