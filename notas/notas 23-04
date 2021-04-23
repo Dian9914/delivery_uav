@@ -1,0 +1,41 @@
+Paquetes:
+mapeado, con camara rgb-d: http://wiki.ros.org/rtabmap_ros
+mapeado con gmapping: http://wiki.ros.org/Robots/TIAGo/Tutorials/Navigation/Mapping / http://wiki.ros.org/gmapping (parece ser el mas usado?)
+mapeado con slam_toolbox: http://wiki.ros.org/Robots/ARI/Tutorials/Navigation/Mapping
+tutoriales de ros-navigation en general: http://grauonline.de/wordpress/?page_id=2769
+amcl -> se basa en robotica probabilistica, coge un mapa de laser y mensajes tf para devolver una estimacion de la posicion
+
+---MAPA PREDEFINIDO---
+obtener informacion de un mapa: http://wiki.ros.org/map_server
+tambien nos permite guardar un mapa
+es una implementacion de sdl_image, que es una api que podemos usar
+
+lo que creo que es mas importante en todo esto: map_server, amcl y gmapping: https://husarion.com/tutorials/ros-tutorials/9-map-navigation/
+
+para generar mapa 2d a una determinada altura: https://github.com/marinaKollmitz/gazebo_ros_2Dmap_plugin
+o tambien https://github.com/hyfan1116/pgm_map_creator
+El paquete gazebo_ros tambien contiene mundos de ejemplo
+
+---EXPLICACION MAPA---
+La idea es generar un archivo .pgm a partir del mundo creado usando uno de los plugins de arriba, y luego posiblemente mediante el paquete map_server
+poder acceder a la informacion.
+Para probar el funcionamiento he cogido el archivo turtlebot3_stage_4.world del paquete turtlebot3_gazebo, como mapa de prueba
+Como alternativa, podriamos haber volado el dron en el entorno de pruebas de forma libre y directamente obtener y guardar el mapa
+
+Tras un rato no logro que funcionen ninguno de los dos plugins. Habría que usar la alternativa
+Siguiendo este tutorial ahora: http://gazebosim.org/tutorials/?tut=plugins_hello_world
+
+
+LO LOGRE AAA
+Pasos a seguir:
+1. En catkin_ws/src, git clone https://github.com/marinaKollmitz/gazebo_ros_2Dmap_plugin
+2. Vamos a compilar el paqueete como viene aqui: http://gazebosim.org/tutorials/?tut=plugins_hello_world
+   Crea la carpeta build, te vas dentro, haces "cmake ../" y luego "make"
+3. El archivo generado está en devel/lib/libgazebo_2Dmap_plugin.so, lo copias a catkin_ws/devel/lib
+4. Borras la carpeta y haces catkin_make
+5. Añades el plugin al modelo de world como viene especificado en el repo de github
+6. rosservice call /gazebo_2Dmap_plugin/generate_map
+7. rosrun map_server map_saver -f test /map:=/map2d <- esto genera el mapa en 2D con las preferencias establecidas
+
+
+A continuación, echo un vistazo a los plugins en 3d
