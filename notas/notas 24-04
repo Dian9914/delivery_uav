@@ -33,3 +33,10 @@ Añadiremos el sensor como un plugin de gazebo montado encima del robot
 
 Para ello se ha creado el archivo lidar.xacro con los parámetros de joint, link y gazebo
 Luego se instancia en model.xacro, y con visualize.launch vemos en rviz que es correcto
+
+
+Hasta el momento, no he logrado cargar control y robot modificado a la vez, pero puedes cargar un mundo vacio con el robot y va bien
+para ello, primero cargas un mundo vacío con "roslaunch gazebo_ros empty_world.launch"
+en la carpeta del modelo, "xacro --inorder model.urdf.xacro > tmp.urdf && check_urdf tmp.urdf"
+"rosrun gazebo_ros spawn_model -file `rospack find delivery_uav`/models/mbzirc/tmp.urdf -urdf -x 0 -y 0 -z 2 -model MYROBOT"
+
