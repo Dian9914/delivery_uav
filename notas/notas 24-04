@@ -7,3 +7,10 @@ de gazebo, con lo cual no hay que realizar pasos adicionales
 
 
 ---IMPORTANTE--- el mapa de prueba en este momento depende de ros-kinetic-turtlebot3*
+
+
+(Edu) Para probar, hemos copiado el modelo del robot mbzirc incluido en grvc_ual para modificarlo y añadir el gripper
+Esta analizando como van los archivos
+
+
+Yo, a continuación, me pongo a trabajar en otro branch cómo añadir el lidar al robot
