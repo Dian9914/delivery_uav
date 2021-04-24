@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+    <!-- propiedades del gripper -->
+    <xacro:property name="basex" value="0" />
+    <xacro:property name="basez" value="-0.09" />
+    <xacro:property name="basey1" value="-0.0020" />
+    <xacro:property name="basey2" value="-0.0050" />
+    <xacro:property name="palm_length" value="0.10" />
+    <xacro:property name="defwidth" value="0.020" />
+    <!-- descripcion de los links del gripper-->
+    <link name="gripper_palm">
+        <collision>
+            <origin xyz="${basex} 0 ${basez}" rpy="0 0 0"/>
+            <geometry>
+                <box size="${defwidth} ${palm_length} ${defwidth}"/>
+            </geometry>
+        </collision>
+
+        <visual>
+            <origin xyz="${basex} 0 ${basez}" rpy="0 0 0"/>
+            <geometry>
+                <box size="${palm_length} ${defwidth} ${defwidth}"/>
+            </geometry>
+        </visual>
+
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="1"/>
+            <inertia
+                ixx="1.0" ixy="0.0" ixz="0.0"
+                iyy="1.0" iyz="0.0"
+                izz="1.0"/>
+        </inertial>
+    </link>
+</robot>
+    <!-- descripcion de los joints del gripper-->

@@ -19,6 +19,15 @@
   <!-- Instantiate mbzirc "mechanics" -->
   <xacro:include filename="$(find delivery_uav)/models/mbzirc/geometry.xacro" />
 
+  <!-- Include gripper -->
+  <xacro:include filename="$(find delivery_uav)/models/mbzirc/simple_gripper.xacro" />
+
+  <!-- Join the uav to the gripper-->
+  <joint name="arm_gripper_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="gripper_palm"/>
+  </joint>
+
   <xacro:if value="$(arg enable_gps_plugin)">
     <!-- Instantiate gps plugin. -->
     <xacro:gps_plugin_macro

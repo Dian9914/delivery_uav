@@ -82,7 +82,7 @@
     <origin xyz="0 0.24 -0.24" rpy="0 1.57 0" />
   </xacro:camera_macro>
 
-  <!-- Magnetic gripper -->
+  <!-- Magnetic gripper 
   <link name="magnetic_gripper">
     <inertial>
       <origin xyz="0 0 0"/>
@@ -102,6 +102,7 @@
     <child link="magnetic_gripper"/>
     <limit effort="0" lower="0" upper="0" velocity="0"/>
   </joint>
+  -->
 
   <!-- Instantiate rotors -->
   <xacro:vertical_rotor
