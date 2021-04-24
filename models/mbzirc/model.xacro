@@ -24,9 +24,18 @@
   <xacro:include filename="$(find delivery_uav)/models/mbzirc/simple_gripper.xacro" />
 
   <!-- Join the uav to the gripper-->
-  <joint name="arm_gripper_joint" type="fixed">
+  <joint name="uav_gripper_joint" type="fixed">
     <parent link="base_link"/>
     <child link="gripper_palm"/>
+  </joint>
+
+  <!-- Include lidar-->
+  <xacro:include filename="$(find delivery_uav)/models/mbzirc/lidar.xacro" />
+
+  <!-- Join the uav to the lidar-->
+  <joint name="uav_lidar_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="lidar_base"/>
   </joint>
 
   <!-- CAMBIOS FINAL-->
