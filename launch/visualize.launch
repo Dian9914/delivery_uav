@@ -1,0 +1,16 @@
+<launch>
+
+	<arg name="model_name" default="mbzirc"/>
+	<arg name="description_package" default="delivery_uav"/>
+
+	<!-- robot_description for rviz -->
+	<param name="robot_description"
+	       command="$(eval 'xacro --inorder ' + find(description_package) + '/models/' + model_name + '/model.xacro')"/>
+
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+		<param name="use_gui" value="true"/>
+	</node>
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find delivery_uav)/config/visualize.rviz" />
+
+</launch>
