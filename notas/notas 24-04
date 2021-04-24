@@ -4,3 +4,6 @@ El tutorial es http://gazebosim.org/tutorials?tut=ros_plugins&cat=connect_ros
 
 No logre modificar CMakeLists pero si añadir en package.xml el directorio lib como path de plugins
 de gazebo, con lo cual no hay que realizar pasos adicionales
+
+
+---IMPORTANTE--- el mapa de prueba en este momento depende de ros-kinetic-turtlebot3*
