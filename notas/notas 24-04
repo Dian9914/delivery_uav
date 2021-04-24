@@ -17,3 +17,19 @@ Yo, a continuación, me pongo a trabajar en otro branch cómo añadir el lidar a
 
 
 xacro es una forma modular y fancy de urdf, a diferencia de sdf, y puedes sacar un urdf del xacro
+
+
+
+En la sesión de tarde, cómo incorporar un lidar al robot
+
+PX4 + Gazebo: https://docs.px4.io/master/en/simulation/gazebo.html
+- OPCIONAL: podemos añadir ruido a la medida del gps
+
+Programar lidar: https://www.cplusgears.com/lesson-5-adding-a-lidar.html
+
+El launch de grvc_ual llama a spawn robot, que lo que hace es cargar el robot en gazebo, junto a mavros y demás
+En el spawn del robot, el xacro se transforma a urdf y luego a sdf
+Añadiremos el sensor como un plugin de gazebo montado encima del robot
+
+Para ello se ha creado el archivo lidar.xacro con los parámetros de joint, link y gazebo
+Luego se instancia en model.xacro, y con visualize.launch vemos en rviz que es correcto

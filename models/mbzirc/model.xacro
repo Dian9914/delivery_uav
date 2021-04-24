@@ -19,6 +19,12 @@
   <!-- Instantiate mbzirc "mechanics" -->
   <xacro:include filename="$(find delivery_uav)/models/mbzirc/geometry.xacro" />
 
+  <!-- instancia del lidar con sus enlaces y su plugin de Gazebo-->
+  <xacro:include filename="$(find delivery_uav)/urdf/lidar.xacro" />
+
+  <!-- una vez incluida la macro con los datos del lidar, tenemos que instanciarlo-->
+  <xacro:lidar_macro /> <!-- De momento no pondremos parametros configurables-->
+
   <xacro:if value="$(arg enable_gps_plugin)">
     <!-- Instantiate gps plugin. -->
     <xacro:gps_plugin_macro
