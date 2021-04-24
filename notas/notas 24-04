@@ -1,0 +1,6 @@
+Hoy, seguir el tutorial para que el plugin del mapa se compile con el paquete
+El plugin es https://github.com/marinaKollmitz/gazebo_ros_2Dmap_plugin
+El tutorial es http://gazebosim.org/tutorials?tut=ros_plugins&cat=connect_ros
+
+No logre modificar CMakeLists pero si añadir en package.xml el directorio lib como path de plugins
+de gazebo, con lo cual no hay que realizar pasos adicionales
