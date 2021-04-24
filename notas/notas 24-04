@@ -14,3 +14,6 @@ Esta analizando como van los archivos
 
 
 Yo, a continuación, me pongo a trabajar en otro branch cómo añadir el lidar al robot
+
+
+xacro es una forma modular y fancy de urdf, a diferencia de sdf, y puedes sacar un urdf del xacro
