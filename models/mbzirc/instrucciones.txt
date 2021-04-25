@@ -1,4 +1,3 @@
 Pasos para poder simular:
-1.- Copiar los archivos lidar.xacro, model.xacro y simple_gripper.xacro a /home/dian/catkin_ws/src/grvc-ual/robots_description/models/mbzirc
-2.- Modificar model.xacro cambiando todas las referencias de delivery_uav a robots_description.
-3.- (OPCIONAL) Comentar el magnetic gripper en geometry.xacro
+1.- Tomar la carpeta backend y volcarla en /home/<user>/catkin_ws/src/grvc-ual/px4_bringup
+2.- Ejecutar "$roslaunch delivery_uav simulation.launch
