@@ -22,7 +22,7 @@
 
         <inertial>
             <origin xyz="0 0 ${0.5 * lid_length + 0.01}" rpy="0 0 0"/>
-            <mass value="1.2"/>
+            <mass value="0.2"/>
             <inertia
                 ixx="0.001087473" ixy="0.0" ixz="0.0"
                 iyy="0.001087473" iyz="0.0"
