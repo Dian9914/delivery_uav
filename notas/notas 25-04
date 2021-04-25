@@ -1,0 +1,7 @@
+- terminado el lidar 2d con plugin. El lidar 2d publica al topic /uav_laser_scan
+- la odometria se obtiene del topic /ual/odom
+- el lidar 3d queda pendiente de probar si el plugin funciona
+
+- el plugin del gripper esta implementado
+- problema con las colisiones del uav (PREGUNTAR)
+- IMPORTANTE: cambiar gpu_laser por laser para mejorar rendimiento en sistemas sin GPU (PREGUNTAR)

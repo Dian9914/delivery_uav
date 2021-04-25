@@ -61,7 +61,7 @@
         <parent link="lidar_base"/>
         <child link="lidar_top"/>
         <origin xyz="0 0 -0.036785" rpy="0 0 0"/>
-            <limit lower="-10000000000000000000" upper="1000000000000000000" effort="10" velocity="3"/>
+            <limit lower="0" upper="0.00001" effort="10" velocity="3"/>
             <axis xyz="0 0 1"/>
      </joint>
 

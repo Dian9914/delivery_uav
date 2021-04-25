@@ -53,7 +53,7 @@
 
         <inertial>
             <origin xyz="0 0 0" rpy="0 0 0"/>
-            <mass value="${finger_length}"/>
+            <mass value="${2 * finger_length}"/>
             <inertia
                 ixx="${(0.015 * finger_length * finger_length)/12}" ixy="0.0" ixz="0.0"
                 iyy="${(0.015 * finger_length * finger_length)/12}" iyz="0.0"
@@ -79,7 +79,7 @@
 
         <inertial>
             <origin xyz="0 0 0" rpy="0 ${tip_rot} 0"/>
-            <mass value="${tip_length}"/>
+            <mass value="${2 * tip_length}"/>
             <inertia
                 ixx="${(0.015 * tip_length * tip_length)/12}" ixy="0.0" ixz="0.0"
                 iyy="${(0.015 * tip_length * tip_length)/12}" iyz="0.0"
@@ -104,7 +104,7 @@
 
         <inertial>
             <origin xyz="0 0 0" rpy="0 0 0"/>
-            <mass value="${finger_length}"/>
+            <mass value="${2 * finger_length}"/>
             <inertia
                 ixx="${(0.015 * finger_length * finger_length)/12}" ixy="0.0" ixz="0.0"
                 iyy="${(0.015 * finger_length * finger_length)/12}" iyz="0.0"
@@ -129,7 +129,7 @@
 
         <inertial>
             <origin xyz="0 0 0" rpy="0 ${-tip_rot} 0"/>
-            <mass value="${tip_length}"/>
+            <mass value="${2 * tip_length}"/>
             <inertia
                 ixx="${(0.015 * tip_length * tip_length)/12}" ixy="0.0" ixz="0.0"
                 iyy="${(0.015 * tip_length * tip_length)/12}" iyz="0.0"
@@ -163,4 +163,19 @@
         <parent link="gripper_right_finger"/>
         <child link="gripper_right_tip"/>
      </joint>
+
+   <gazebo>
+    <plugin name="gazebo_ros_left_force" filename="libgazebo_ros_force.so">
+      <bodyName>gripper_left_finger</bodyName>
+      <topicName>/uav_left_force</topicName>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="gazebo_ros_right_force" filename="libgazebo_ros_force.so">
+      <bodyName>gripper_right_finger</bodyName>
+      <topicName>/uav_right_force</topicName>
+    </plugin>
+  </gazebo>
+
 </robot>
