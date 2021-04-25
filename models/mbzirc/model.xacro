@@ -32,6 +32,9 @@
   <!-- Include lidar-->
   <xacro:include filename="$(find delivery_uav)/models/mbzirc/lidar.xacro" />
 
+  <!-- Prueba lidar tutorial-->
+<!--   <xacro:include filename="$(find delivery_uav)/models/mbzirc/lidar_2.xacro" /> -->
+
   <!-- Join the uav to the lidar-->
   <joint name="uav_lidar_joint" type="fixed">
     <parent link="base_link"/>
