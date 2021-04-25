@@ -1,0 +1,108 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+    <!-- propiedades del lidar -->
+    <xacro:property name="lid_radius" value="0.04267" />
+    <xacro:property name="lid_length" value="0.05867" />
+
+    <!-- descripcion de los links del lidar-->
+    <link name="lidar_base">
+        <collision>
+            <origin xyz="0 0 ${0.5 * lid_length + 0.01}" rpy="0 0 0"/>
+            <geometry>
+                <cylinder radius="${lid_radius}" length="${lid_length}"/>
+            </geometry>
+        </collision>
+
+        <visual>
+            <origin xyz="0 0 ${0.5 * lid_length + 0.01}" rpy="0 0 0"/>
+            <geometry>
+                <cylinder radius="${lid_radius}" length="${lid_length}"/>
+            </geometry>
+        </visual>
+
+        <inertial>
+            <origin xyz="0 0 ${0.5 * lid_length + 0.01}" rpy="0 0 0"/>
+            <mass value="1.2"/>
+            <inertia
+                ixx="0.001087473" ixy="0.0" ixz="0.0"
+                iyy="0.001087473" iyz="0.0"
+                izz="0.001092437"/>
+        </inertial>
+    </link>
+
+
+    <link name="lidar_top">
+        <collision>
+            <origin xyz="0 0 ${1.5 * lid_length + 0.01}" rpy="0 0 0"/>
+            <geometry>
+                <cylinder radius="${lid_radius}" length="0.07357"/>
+            </geometry>
+        </collision>
+
+        <visual>
+            <origin xyz="0 0 ${1.5 * lid_length + 0.01}" rpy="0 0 0"/>
+            <geometry>
+                <cylinder radius="${lid_radius}" length="0.07357"/>
+            </geometry>
+        </visual>
+
+        <inertial>
+            <origin xyz="0 0 ${1.5 * lid_length + 0.01}" rpy="0 0 0"/>
+            <mass value="0.1"/>
+            <inertia
+                ixx="0.000090623" ixy="0.0" ixz="0.0"
+                iyy="0.000090623" iyz="0.0"
+                izz="0.000091036"/>
+        </inertial>
+    </link>
+    
+    <!-- descripcion de los joints del gripper-->
+     <joint name="lidar_joint" type="revolute">
+        <parent link="lidar_base"/>
+        <child link="lidar_top"/>
+        <origin xyz="0 0 -0.036785" rpy="0 0 0"/>
+            <limit lower="-10000000000000000000" upper="1000000000000000000" effort="10" velocity="3"/>
+            <axis xyz="0 0 1"/>
+     </joint>
+
+    <gazebo reference="lidar_top">
+    <sensor type="ray" name="laz">
+       <always_on>true</always_on>
+       <pose>0 0 0.117 1.5707 0 0</pose>
+       <visualize>true</visualize>
+       <update_rate>30</update_rate>
+       <ray>
+         <scan>
+           <horizontal>
+             <samples>32</samples>
+             <resolution>1</resolution>
+             <min_angle>-0.53529248</min_angle>
+             <max_angle>0.18622663</max_angle>
+           </horizontal>
+           <vertical>
+             <samples>1</samples>
+             <resolution>1</resolution>
+             <min_angle>-0.15</min_angle>
+             <max_angle>0.15</max_angle>
+           </vertical>
+         </scan>
+          <range>
+           <min>0.5</min>
+           <max>30</max>
+           <resolution>0.02</resolution>
+         </range>
+      <noise>
+        <type>gaussian</type>
+        <mean>0.0</mean>
+        <stddev>0.01</stddev>
+      </noise>
+      </ray>
+      <!-- TO DO: probar que el plugin funcione-->
+      <plugin name="gazebo_ros_block_laser_controller" filename="libgazebo_ros_block_laser.so">
+        <topicName>/uav_3d_scan</topicName>
+        <frameName>lidar_top</frameName>
+      </plugin>
+   </sensor>
+  </gazebo>
+
+</robot>
