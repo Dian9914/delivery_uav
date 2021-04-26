@@ -66,7 +66,7 @@
      </joint>
 
     <gazebo reference="lidar_top">
-    <sensor type="gpu_ray" name="laz">
+    <sensor type="ray" name="laz">
        <always_on>true</always_on>
        <pose>0 0 0.117 0 0 0</pose>
        <visualize>true</visualize>
@@ -91,7 +91,7 @@
         <stddev>0.01</stddev>
       </noise>
       </ray>
-      <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_gpu_laser.so">
+      <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_laser.so">
         <topicName>/uav_laser_scan</topicName>
         <frameName>lidar_top</frameName>
       </plugin>
