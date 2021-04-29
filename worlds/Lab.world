@@ -15,7 +15,7 @@
     </light>
     <plugin name='gazebo_occupancy_map' filename='libgazebo_2Dmap_plugin.so'>
       <map_resolution>0.05</map_resolution>
-      <map_z>100</map_z>
+      <map_z>2</map_z>
       <map_size_x>100</map_size_x>
       <map_size_y>100</map_size_y>
       <init_robot_x>0</init_robot_x>
