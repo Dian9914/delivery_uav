@@ -33,7 +33,7 @@ Problema: Desplazar el mapa causa un error al cargar
 PROBLEMA: UAL no registra bien la pose del robot si lo cargamos en un punto desplazado, necesito un pose_truth para RViz
 Otra alternativa sería programar el offset que le metemos y hacer todos los cálculos de lo que nos dan los nodos con el offset
 Esto para el caso donde lo soltemos en cualquier posición y tenga que orientarse
-LO QUE BUSCO ES UN NODO DE TRANSFORM, TF -> INVESTIGAR
+LO QUE BUSCO ES UN NODO DE TRANSFORM, TF -> INVESTIGAR, IMPORTANTE PARA SPAWN EN OTRAS POSICIONES
 
 esto puede ayudar con lo de tf:
 https://answers.ros.org/question/44639/how-to-broadcast-a-transform-between-map-and-odom/
@@ -59,4 +59,12 @@ PREGUNTAR: UAL falla mucho al abrirse, me sale que "not landed_armed" y temo que
 
 Intro a tf: http://wiki.ros.org/tf/Tutorials/Introduction%20to%20tf
 
+laserscan a pointcloud: https://www.youtube.com/watch?v=GvilxcePD64
+
+la posible solución: https://answers.ros.org/question/49983/trouble-viewing-lidar-data-in-rviz/
+
+el problema es que no tenemos un nodo que sea world, entonces si fijas el fixed frame en el dron el mapa se mueve y si lo pones en el mapa
+todo lo demas se mueve, hay que ver como tirar de esto para hacer las tf que hagan falta
+
+¿paquete tf2?
 
