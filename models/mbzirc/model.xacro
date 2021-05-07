@@ -41,6 +41,9 @@
     <child link="lidar_base"/>
   </joint>
 
+  <!-- Posicion absoluta para debugging-->
+  <xacro:include filename="$(find delivery_uav)/models/mbzirc/absolute_pos.xacro" />
+  
   <!-- CAMBIOS FINAL-->
 
   <xacro:if value="$(arg enable_gps_plugin)">

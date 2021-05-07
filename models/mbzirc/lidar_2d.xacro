@@ -70,12 +70,12 @@
     <sensor type="ray" name="laz">
        <always_on>true</always_on>
        <pose>0 0 0.117 0 0 0</pose>
-       <visualize>true</visualize>
+       <visualize>false</visualize>
        <update_rate>10</update_rate>
        <ray>
          <scan>
            <horizontal>
-             <samples>360</samples>
+             <samples>2000</samples>
              <resolution>1</resolution>
              <min_angle>-3.1415</min_angle>
              <max_angle>3.12</max_angle>

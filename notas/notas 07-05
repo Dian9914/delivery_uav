@@ -37,7 +37,26 @@ LO QUE BUSCO ES UN NODO DE TRANSFORM, TF -> INVESTIGAR
 
 esto puede ayudar con lo de tf:
 https://answers.ros.org/question/44639/how-to-broadcast-a-transform-between-map-and-odom/
-INVESTIGAR NODO AMCL
+INVESTIGAR NODO AMCL (esto implementa un filtro de partículas que es lo que tengo que hacer vaya)
 
 para añadir ground truth:
 https://answers.ros.org/question/246440/husky-perfect-localization-gazebo-positioning-system/?comment=247207?comment=247207#post-id-247207
+
+En el siguiente commit se añade la simulación de RViz donde sólo se muestra el robot, mientras que en la que se ejecuta con Gazebo se verá el robot 
+como un punto
+
+Ahora se intentará implementar el plugin de posición absoluta para poder mostrar fácil en RViz dónde está el robot
+
+El model de UAL ya incorpora un módulo de ground_truth, tengo que ver cómo hacer que funcione
+Sin embargo, tras probar, hemos implementado nosotros mismos el plugin
+
+
+En siguiente lugar, las medidas del lidar siguen teniendo un offset
+He creado un script para calcular el valor mínimo de las medidas del lidar
+
+
+PREGUNTAR: UAL falla mucho al abrirse, me sale que "not landed_armed" y temo que sea por la carga al abrir las cosas
+
+Intro a tf: http://wiki.ros.org/tf/Tutorials/Introduction%20to%20tf
+
+
