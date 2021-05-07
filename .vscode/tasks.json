@@ -1,0 +1,21 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "ros",
+			"command": "roslaunch",
+			"args": [
+				"delivery_uav",
+				"simulation_lab.launch"
+			],
+			"problemMatcher": [
+				"$roslaunch"
+			],
+			"label": "roslaunch: roslaunch",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		}
+	]
+}

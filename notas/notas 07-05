@@ -1,0 +1,43 @@
+Editar el cmakelists será tarea del futuro, es posible hacerlo
+Hasta entonces, con hacer lo de las instrucciones será suficiente
+También en el futuro habrá que pensar cómo replantear el paquete, por ahora lo fundamental será construir los algoritmos y los modelos que necesitemos
+basicamente aqui podremos poner los mensajes de los que dependera nuestro paquete,
+otros paquetes de los que dependa, y tambien si necesitamos mover archivos entre paquetes se que se puede de alguna forma
+
+Algunos tutoriales para cmakelists:
+http://wiki.ros.org/ROS/Tutorials/CreatingPackage
+mirar el cmakelists de los paquetes de grvc-ual
+https://jbohren.com/tutorials/2014-02-12-gentle-catkin-intro/#using-catkin-in-your-cmake-project
+https://roboticsbackend.com/ros-include-cpp-header-from-another-package/
+http://gazebosim.org/tutorials/?tut=ros_plugins
+
+
+El objetivo inicial de hoy será poder ver cómo usar la info que nos proporciona el lidar en el mapa de prueba más pequeño, y verlo en RViz
+Seguidamente ver cómo usar el GPS de Mavros, y por último combinar usando un filtro de partículas
+
+- cambiados nombres de launch
+- añadidas instrucciones a la raiz del proyecto
+- añadido mesh de hokuyo para el lidar
+- añadido launch para mundo de pruebas
+- añadida simulación en RViz
+Pendiente: Incluir offsets
+
+
+Problema: Al cargar el mapa en RViz, todo se mueve. El scan del Lidar se ha importado sin problema
+Volando parece que va bien. Spawneamos el robot en X=-1 para que no esté muy cerca del muro
+
+PREGUNTA: ¿se puede automatizar el despegue con UAL? -> mirar con /ual/state
+
+Problema: Desplazar el mapa causa un error al cargar
+
+PROBLEMA: UAL no registra bien la pose del robot si lo cargamos en un punto desplazado, necesito un pose_truth para RViz
+Otra alternativa sería programar el offset que le metemos y hacer todos los cálculos de lo que nos dan los nodos con el offset
+Esto para el caso donde lo soltemos en cualquier posición y tenga que orientarse
+LO QUE BUSCO ES UN NODO DE TRANSFORM, TF -> INVESTIGAR
+
+esto puede ayudar con lo de tf:
+https://answers.ros.org/question/44639/how-to-broadcast-a-transform-between-map-and-odom/
+INVESTIGAR NODO AMCL
+
+para añadir ground truth:
+https://answers.ros.org/question/246440/husky-perfect-localization-gazebo-positioning-system/?comment=247207?comment=247207#post-id-247207

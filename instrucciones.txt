@@ -1,0 +1,3 @@
+Pasos para poder simular:
+1.- Tomar la carpeta backend y volcarla en /home/<user>/catkin_ws/src/grvc-ual/px4_bringup
+2.- Ejecutar "$roslaunch delivery_uav simulation.launch
