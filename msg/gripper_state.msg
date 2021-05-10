@@ -1,2 +1,2 @@
-bool state
+string state
 int8 torque

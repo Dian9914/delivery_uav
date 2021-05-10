@@ -6,28 +6,36 @@ import rospy
 
 pub_r = rospy.Publisher('uav_right_force', Wrench , queue_size=10)
 pub_l = rospy.Publisher('uav_left_force', Wrench, queue_size=10)
-open_msg = Wrench()
-close_msg = Wrench()  
+gripper_order = Wrench()
 
 def gripper_handler(req):
-    if req.gripper_msg.state:
-        print 'Closing the gripper with torque:', req.gripper_msg.torque
-        close_msg.torque.y=req.gripper_msg.torque*0.0001
-        pub_l.publish(close_msg)
-        close_msg.torque.y=-req.gripper_msg.torque*0.0001
-        pub_r.publish(close_msg)
+    if req.gripper_msg.state=='close':
+        print 'GRIPPER NODE: Closing the gripper with torque:', req.gripper_msg.torque
+        gripper_order.torque.y=req.gripper_msg.torque*0.0001
+        pub_l.publish(gripper_order)
+        gripper_order.torque.y=-req.gripper_msg.torque*0.0001
+        pub_r.publish(gripper_order)
+    elif req.gripper_msg.state=='open':
+        print("GRIPPER NODE: Opening the gripper")
+        gripper_order.torque.y=-req.gripper_msg.torque*0.0001
+        pub_l.publish(gripper_order)
+        gripper_order.torque.y=req.gripper_msg.torque*0.0001
+        pub_r.publish(gripper_order)
+    elif req.gripper_msg.state=='neutral':
+        print("GRIPPER NODE: Setting the gripper in neutral state")
+        gripper_order.torque.y=0
+        pub_l.publish(gripper_order)
+        gripper_order.torque.y=0
+        pub_r.publish(gripper_order)
     else:
-        print("Opening the gripper")
-        open_msg.torque.y=-req.gripper_msg.torque*0.0001
-        pub_l.publish(open_msg)
-        open_msg.torque.y=req.gripper_msg.torque*0.0001
-        pub_r.publish(open_msg)
+        print("GRIPPER NODE: Incorrect request")
+        return False
     return True
 
 def gripper_server():
     rospy.init_node('gripper_node')
     s = rospy.Service('gripper_control', gripper_srv, gripper_handler)
-    print("Gripper control ready.")
+    print("GRIPPER NODE: Gripper control ready.")
     rospy.spin()
 
 if __name__ == "__main__":
