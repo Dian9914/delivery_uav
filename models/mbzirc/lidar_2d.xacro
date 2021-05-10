@@ -43,7 +43,7 @@
             <origin xyz="0 0 ${1.5 * lid_length + 0.01}" rpy="0 0 0"/>
             <geometry>
                 <!-- <cylinder radius="${lid_radius}" length="0.07357"/> -->
-                <mesh filename="package://delivery_uav/models/mbzirc/meshes/hokuyo.dae"/>
+                <mesh filename="package://delivery_uav/models/mbzirc/meshes/hokuyo.dae" scale="1.75 1.75 1.75"/>
             </geometry>
         </visual>
 
@@ -57,7 +57,7 @@
         </inertial>
     </link>
     
-    <!-- descripcion de los joints del gripper-->
+    <!-- descripcion de los joints del lidar-->
      <joint name="lidar_joint" type="revolute">
         <parent link="lidar_base"/>
         <child link="lidar_top"/>

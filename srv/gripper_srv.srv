@@ -1,0 +1,5 @@
+# tipo de mensaje o variables que se esperan recibir
+gripper_state gripper_msg
+---
+bool status
+# tipo de mensaje o variables que se envian a modo de respuesta

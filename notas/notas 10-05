@@ -1,0 +1,13 @@
+- Cambio en la escala del mesh del lidar
+
+* Nodo gripper
+- Creamos el mensaje que usara el servicio del gripper, siguiendo el tutorial
+    http://wiki.ros.org/msg
+CUIDADO: modifico package.xml y CMakeLists.txt
+
+- Creo el servicio que usara el nodo del gripper para comunicarse, siguiendo el tutorial
+    http://wiki.ros.org/srv
+CUIDADO: modifico CMakeLists.txt
+
+- Creo el codigo en python para el nodo, siguiendo el esquema de un nodo servidor
+CUIDADO: modifico CMakeList.txt
