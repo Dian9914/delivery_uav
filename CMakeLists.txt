@@ -52,12 +52,14 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   gripper_state.msg
+  user_msg.msg
 )
 
 ## Generate services in the 'srv' folder
  add_service_files(
    FILES
    gripper_srv.srv
+   user_interface.srv
  )
 
 ## Generate actions in the 'action' folder
@@ -161,6 +163,7 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
   scripts/gripper_node.py
+  scripts/controller_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

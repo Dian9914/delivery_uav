@@ -9,5 +9,7 @@ CUIDADO: modifico package.xml y CMakeLists.txt
     http://wiki.ros.org/srv
 CUIDADO: modifico CMakeLists.txt
 
-- Creo el codigo en python para el nodo, siguiendo el esquema de un nodo servidor
+- Creo el codigo en python para el nodo del gripper, siguiendo el esquema de un nodo servidor
 CUIDADO: modifico CMakeList.txt
+
+- Creo el servicio, el mensaje y primeros toques del codigo del nodo central
