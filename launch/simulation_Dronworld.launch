@@ -29,7 +29,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         <!-- Launch Gazebo simulation -->
         <rosparam param="/use_sim_time">true</rosparam>
         <node pkg="px4_bringup" type="launch_gzworld.py" name="gazebo_world" output="screen"
-        args="-physics=ode -world=$(find delivery_uav)/worlds/Dron.world">
+        args="-physics=ode -world=$(find delivery_uav)/worlds/Dron.world -description_package=delivery_uav">
             <rosparam param="sim_origin">[37.558542, -5.931074, 7.89]</rosparam><!-- [lat,lon,alt] -->
         </node>
     </group>
@@ -41,6 +41,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     -->
     <!-- Launch robot id=1 -->
     <include file="$(find px4_bringup)/launch/spawn_robot.launch" unless="$(arg multi)">
+    	<arg name="description_package" value="delivery_uav"/>
         <arg name="id" value="1"/>
         <arg name="material" value="Orange"/>
         <arg name="mode" value="$(arg mode)"/>
@@ -54,7 +55,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     <group if="$(arg multi)">
         <!-- Launch robot id=1 -->
         <include file="$(find px4_bringup)/launch/spawn_robot.launch" ns="$(arg ns_prefix)1">
-            <arg name="id" value="1"/>
+            <arg name="description_package" value="delivery_uav"/>
+	    <arg name="id" value="1"/>
             <arg name="material" value="Orange"/>
             <arg name="mode" value="$(arg mode)"/>
             <arg name="x" value="0"/>
@@ -65,6 +67,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         </include>
         <!-- Launch robot id=2 -->
         <include file="$(find px4_bringup)/launch/spawn_robot.launch" ns="$(arg ns_prefix)2">
+            <arg name="description_package" value="delivery_uav"/>
             <arg name="id" value="2"/>
             <arg name="material" value="Indigo"/>
             <arg name="mode" value="sitl"/>
@@ -76,6 +79,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         </include>
         <!-- Launch robot id=3 -->
         <include file="$(find px4_bringup)/launch/spawn_robot.launch" ns="$(arg ns_prefix)3">
+            <arg name="description_package" value="delivery_uav"/>
             <arg name="id" value="3"/>
             <arg name="material" value="ZincYellow"/>
             <arg name="mode" value="sitl"/>
