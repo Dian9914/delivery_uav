@@ -1,0 +1,4 @@
+- Actualizamos ficheros de simulación para llamar a las dependencias con px4_bringup de forma adecuada
+dandole el argumento "-description_package=delivery_uav" 
+
+- Creación de la interfaz de usuario en "central_node.py" 
