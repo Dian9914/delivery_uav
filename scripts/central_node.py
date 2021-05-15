@@ -1,28 +1,37 @@
 #!/usr/bin/env python
 
 from delivery_uav.srv import gripper_srv, user_interface
+from delivery_uav.msg import gripper_state
+from uav_abstraction_layer.srv import GoToWaypoint, Land, TakeOff
 import rospy
 from threading import Lock, Condition
+from service_client import service_client #esta bien, aunque marque error. Odio pylance
 
 class user_interface_server():
-    home = [0, 0, 0]
-    goal = [0, 0, 0]
+    def __init__(self):
+        self.home = [0, 0, 0]
+        self.goal = [0, 0, 0]
 
-    mtx_auto = Lock()
-    mtx_ready = Lock()
-    mtx_started = Lock()
-    mtx_charge = Lock()
-    vc_started = Condition(mtx_started)
-    vc_ready = Condition(mtx_ready)
-    vc_charge = Condition(mtx_charge)
-    
-    ready = False       #Variable que representa si el UAV esta en condicion de recibir ordenes
-    started = False     #Variable que representa si el sistema esta inicializado y el UAV despegado
-    charge = True       #Variable que representa si la carga esta a bordo
+        self.mtx_auto = Lock()
+        self.mtx_ready = Lock()
+        self.mtx_started = Lock()
+        self.mtx_charge = Lock()
+        self.vc_started = Condition(self.mtx_started)
+        self.vc_ready = Condition(self.mtx_ready)
+        self.vc_charge = Condition(self.mtx_charge)
+        
+        self.ready = False       #Variable que representa si el UAV esta en condicion de recibir ordenes
+        self.started = False     #Variable que representa si el sistema esta inicializado y el UAV despegado
+        self.charge = True       #Variable que representa si la carga esta a bordo
 
-    travel = False        #Variable que representa si el UAV ya esta dirigiendose a un punto
-    mtx_travel = Lock()
-    vc_travel = Condition(mtx_travel)
+        self.travel = False        #Variable que representa si el UAV ya esta dirigiendose a un punto
+        self.mtx_travel = Lock()
+        self.vc_travel = Condition(self.mtx_travel)
+
+        self.ual_takeoff = service_client('/ual/take_off',TakeOff)
+        self.ual_goto = service_client('/ual/go_to_waypoint',GoToWaypoint)
+        self.ual_land = service_client('/ual/land',Land)
+        self.gripper = service_client('/del_uav/gripper_node/control',gripper_srv)
 
 
     def start_sys(self):
@@ -39,14 +48,39 @@ class user_interface_server():
         print("CENTRAL NODE: Starting the idle mode.")
 
     def drop_charge(self):
-        #MODO AUTOMATICO: Principal modo de funcionamiento, el UAV se desplaza a un punto dado
-        print("CENTRAL NODE: Starting the drop of the charge.")
+        #SOLTAR LA CARGA: Cuando se le llama, abre el gripper para soltar la carga
+        #Devuelve True si la carga ha sido soltada, y False si ha ocurrido algun error
+        print("DROP SERVICE [CN]: Starting the drop of the charge.")
+
+        # Espero a que el UAV este estable
+        self.mtx_ready.acquire()
+
+        # Creo el request que se enviara al servicio. Abre el gripper.
+        request = gripper_state()
+        request.torque = 1
+        request.state = 'open'
+        # Envio un unico request
+        response = self.gripper.single_response(request)
+        # Independientemente del resultado, la carga ya se ha liberado y el UAV puede volver a moverse.
+        self.mtx_ready.release() 
+        # Comprobamos el resultado de nuestra llamada.
+        if not response:
+            print('DROP SERVICE [CN]: Error with gripper. Cant open the gripper.')
+            return False
+
+        # Creo el request que se enviara al servicio. Deja el gripper en estado neutro.
+        request = gripper_state()
+        request.torque = 0
+        request.state = 'idle'
+        # Envio un unico request
+        response = self.gripper.single_response(request)
+        if not response:
+            print('DROP SERVICE [CN]: WARNING: cant reach gripper.')
+
+        print('DROP SERVICE [CN]: Charge dropped succesfully')
+        return True
 
 
-        self.mtx_charge.acquire()
-        self.charge=False # LA CARGA YA NO ESTA A BORDO
-        self.vc_charge.notify_all()
-        self.mtx_charge.release()
 
     def gohome(self):
         #MODO AUTOMATICO: Principal modo de funcionamiento, el UAV se desplaza a un punto dado
@@ -176,6 +210,8 @@ class user_interface_server():
         elif req.user_cmd.command=='drop':
             print("CENTRAL NODE: Requested charge drop.")
 
+            # Espero a que no haya un servicio drop ya ejecutandose
+            self.mtx_charge.acquire()
             # Espero a que el sistema este iniciado
             self.mtx_started.acquire()
             if not self.started:
@@ -184,19 +220,25 @@ class user_interface_server():
                     self.vc_started.wait()
 
             # Compruebo que el UAV siga teniendo la carga. Si no la tiene, drop no tiene sentido.
-            self.mtx_charge.acquire()
             if not self.charge:
                 print("CENTRAL NODE: The UAV has already dropped the charge.")
                 self.mtx_charge.release()
                 self.mtx_started.release()
                 return False
-            self.mtx_charge.release()
             self.mtx_started.release()
 
             # Ejecuto el codigo
-            self.drop_charge()
-            print("CENTRAL NODE: Charge dropped.")
-            return True
+            response = self.drop_charge()
+            # Compruebo si ha sido un exito
+            if response: 
+                print("CENTRAL NODE: Charge dropped.")
+                self.charge=False # LA CARGA YA NO ESTA A BORDO
+                self.vc_charge.notify_all()
+            else:
+                print("CENTRAL NODE: Error with gripper. Cant drop the charge.")
+            self.mtx_charge.release() #libero el servicio drop
+
+            return response
 
         else:
             print("CENTRAL NODE: Incorrect command.")

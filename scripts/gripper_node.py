@@ -5,9 +5,10 @@ from geometry_msgs.msg import Wrench
 import rospy
 
 class gripper_server():
-    pub_r = rospy.Publisher('uav_right_force', Wrench , queue_size=10)
-    pub_l = rospy.Publisher('uav_left_force', Wrench, queue_size=10)
-    gripper_order = Wrench()
+    def __init__(self):
+        self.pub_r = rospy.Publisher('uav_right_force', Wrench , queue_size=10)
+        self.pub_l = rospy.Publisher('uav_left_force', Wrench, queue_size=10)
+        self.gripper_order = Wrench()
 
     def gripper_handler(self, req):
         if req.gripper_msg.state=='close':
@@ -35,7 +36,7 @@ class gripper_server():
 
     def start_server(self):
         rospy.init_node('gripper_node')
-        s = rospy.Service('gripper_control', gripper_srv, self.gripper_handler)
+        s = rospy.Service('/del_uav/gripper_node/control', gripper_srv, self.gripper_handler)
         print("GRIPPER NODE: Gripper control ready.")
         rospy.spin()
 
