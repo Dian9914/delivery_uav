@@ -1,0 +1,5 @@
+- Actualizado simulation_lab para ejecutar el nodo del gripper
+
+- Drop charge del nodo central implementados
+
+- Modo automatico y servicio de inicio del nodo central implementados

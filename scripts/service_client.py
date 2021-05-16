@@ -6,7 +6,7 @@ class service_client():
         self.service = service_name
         self.srv = srv_name
         rospy.wait_for_service(self.service)
-        print('CENTRAL NODE: Service %s ready'%self.service)
+        print('SERVICE CLIENT MANAGER: Service %s ready'%self.service)
 
 
     def single_response(self, my_param):
@@ -16,10 +16,10 @@ class service_client():
             s_service_response = s_service(my_param)
             return s_service_response
         except rospy.ServiceException as e:
-            print ('CENTAL NODE: Service call failed: %s' % e)
+            print ('SERVICE CLIENT MANAGER: Service call failed: %s' % e)
             return False
         except TypeError as e:
-            print ('CENTRAL NODE: Wrong parameter for request: %s' % e)
+            print ('SERVICE CLIENT MANAGER: Wrong parameter for request: %s' % e)
             return False
 
 
@@ -29,7 +29,7 @@ class service_client():
             self.p_service = rospy.ServiceProxy(self.service, self.srv, persistent=True)
             return True
         except rospy.ServiceException as e:
-            print ('CENTAL NODE: Service conection failed: %s' % e)
+            print ('SERVICE CLIENT MANAGER: Service conection failed: %s' % e)
             return False
 
 
@@ -39,7 +39,7 @@ class service_client():
             p_service_response = self.p_service(my_param)
             return p_service_response
         except rospy.ServiceException as e:
-            print ('CENTAL NODE: Service call failed: %s' % e)
+            print ('SERVICE CLIENT MANAGER: Service call failed: %s' % e)
             return False
 
 
@@ -47,11 +47,14 @@ class service_client():
         # Cierra una conexion persistente con un servicio.
         try:
             self.p_service.close()
-            print('CENTRAL_NODE: Persistent conection with service %s ended'%self.service)
+            print('SERVICE CLIENT MANAGER: Persistent conection with service %s ended'%self.service)
+            return True
         except rospy.ServiceException as e:
-            print ('CENTAL NODE: Service conection failed: %s' % e)
+            print ('SERVICE CLIENT MANAGER: Service conection failed: %s' % e)
             return False
 
-    def reconnect(self):
+    def is_avalible(self):
+        # Espera a que el servicio vuelva a estar disponible
         rospy.wait_for_service(self.service)
-        print('CENTRAL NODE: Service %s ready'%self.service)
+        print('SERVICE CLIENT MANAGER: Service %s ready'%self.service)
+        return True
