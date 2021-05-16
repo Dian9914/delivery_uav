@@ -13,7 +13,6 @@ class user_interface_server():
     def __init__(self):
         # Inicializacion de los parametros del sistema
         self.home = [0, 0, 0]   #punto en el que se ejecuta start en coordenadas mapa
-        self.goal = [0, 0, 0]   #objetivo actual para el UAV en coordenadas mapa
         self.trayectory = []        #matriz donde se guardara la trayectoria dada por el planner
         self.pose = [0, 0, 0]   #posicion del UAV en coordenadas mapa dada por el localizador
 
@@ -103,6 +102,12 @@ class user_interface_server():
                 print('START SERVICE [CN]: Unrecogniced input.')
                 continue
         
+
+        # debemos esperar a haber llegado al punto para hacer la siguiente llamada. Para ello, usaremos rospy.sleep
+        wait = rospy.Rate(2) # vamos a esperar la condicion con una frecuencia de 2Hz, es decir, que el proceso estara
+        # bloqueado durante 0.5 segundos aproximadamente antes de comprobar que hemos llegado al punto
+        while not (self.pose[2] == request.height): #mientras no hayamos llegado a la altura deseada
+            wait.sleep()
         # Registramos la posicion UNA VEZ ESTAMOS VOLANDO como punto home
         # Esto es importante porque al planificador nunca debemos darle como objetivo un punto en el suelo
         # Ya que podria planificar un camino potencialmente peligroso demasiado cercano al suelo
@@ -140,10 +145,13 @@ class user_interface_server():
             # primero adquirimos el mutex, para asegurarnos de que ningun otro hilo manda ordenes al UAV durante el movimiento
             self.mtx_ready.acquire()
             # comprobamos que ningun hilo idle haya abortado el viaje
+            self.mtx_travel.acquire()
             if not self.travel:
                 print("AUTO MODE [CN]: Travel aborted")
+                self.mtx_travel.release()
+                self.mtx_ready.release()
                 break
-            
+            self.mtx_travel.release()
             # actualizamos los valores de request para el siguiente waypoint
             request.waypoint.pose.position.x = waypoint[0]
             request.waypoint.pose.position.y = waypoint[1]
@@ -151,21 +159,33 @@ class user_interface_server():
 
             #llamamos al servicio para comenzar el movimiento
             response = self.ual_goto.persistent_response(request)
-
+            while not response:     
+                print('AUTO MODE [CN]: Error with GoToWaypoint.')
+                entrada = raw_input('AUTO MODE [CN]: Try again? [S/n] ->')     #existe en python2 para obtener texto por teclado
+                if entrada == 'S':    # Si la respuesta es si, reiniciamos la conexion y reintentamos
+                    self.ual_goto.persistent_close()
+                    self.ual_goto.persistent_init()
+                    response = self.ual_goto.persistent_response(request)
+                elif entrada == 'n':    # Si la respuesta es no, el sistema abortara el inicio y devolvera False
+                    print('AUTO MODE [CN]: Error reaching waypoint [%d, %d, %d].'%(waypoint[0],waypoint[1],waypoint[2]))
+                    print('AUTO MODE [CN]: Aborting auto_mode.')
+                    self.mtx_ready.release()
+                    break
+                else:
+                    print('AUTO MODE [CN]: Unrecogniced input.')
+                    continue
             # debemos esperar a haber llegado al punto para hacer la siguiente llamada. Para ello, usaremos rospy.sleep
             wait = rospy.Rate(2) # vamos a esperar la condicion con una frecuencia de 2Hz, es decir, que el proceso estara
             # bloqueado durante 0.5 segundos aproximadamente antes de comprobar que hemos llegado al punto
             while not (self.pose[0] == waypoint[0] and self.pose[1] == waypoint[1] and self.pose[2] == waypoint[2]):
                 wait.sleep()
-            # Comprobamos el resultado de nuestra llamada.
-            if not response:
-                print('AUTO MODE [CN]: Error reaching waypoint [%d, %d, %d].'%(waypoint[0],waypoint[1],waypoint[2]))
-                break
-            else:
-                print('AUTO MODE [CN]: Succesfully reached waypoint [%d, %d, %d].'%(waypoint[0],waypoint[1],waypoint[2]))
-                print('DEBUG AUTO MODE [CN]: Actual position is [%d, %d, %d].'%(self.pose[0],self.pose[1],self.pose[2]))
-            # El bucle reinicia devolviendo el mutex para permitir que otros hilos den ordenes al UAV
+
+            # Una vez hemos hecho la orden, abrimos el mutex para permitir que otros hilos den ordenes al UAV
             self.mtx_ready.release()
+
+            # Comprobamos el resultado de nuestra llamada a servicio.
+            print('AUTO MODE [CN]: Succesfully reached waypoint [%d, %d, %d].'%(waypoint[0],waypoint[1],waypoint[2]))
+            print('DEBUG AUTO MODE [CN]: Actual position is [%d, %d, %d].'%(self.pose[0],self.pose[1],self.pose[2]))
 
         # Comprobamos que hayamos llegado al destino
         if self.pose[0] == goal[0] and self.pose[1] == goal[1] and self.pose[2] == goal[2]:
@@ -183,8 +203,20 @@ class user_interface_server():
         return result
 
     def idle_mode(self):
-        #MODO AUTOMATICO: Principal modo de funcionamiento, el UAV se desplaza a un punto dado
-        print("IDLE MODE [CN]: Starting the idle mode.")
+        #MODO IDLE: Se cancela cualquier ruta y se ordena al UAV que permanezca inmovil.
+        print("IDLE MODE [CN]: Switching to idle mode.")
+
+        # primero debemos esperar a que el UAV este estatico en el aire y listo para recibir ordenes
+        self.mtx_ready.acquire()
+        # a continuacion, cambiamos el estado del UAV poniendo a false la variable travel
+        self.mtx_travel.acquire()
+        self.travel = False
+        self.vc_travel.notify()
+        self.mtx_travel.release()
+        self.mtx_ready.release()
+
+        return True
+        
 
     def drop_charge(self):
         #SOLTAR LA CARGA: Cuando se le llama, abre el gripper para soltar la carga
@@ -270,6 +302,7 @@ class user_interface_server():
             if self.travel:
                 print("CENTRAL NODE: The UAV has already a goal defined.")
                 self.mtx_started.release() 
+                self.mtx_travel.release()
                 return False
             
             self.travel=True # El UAV ESTA VIAJANDO
@@ -277,17 +310,18 @@ class user_interface_server():
             self.mtx_started.release()
 
             # Ejecuto el codigo
-            self.goal[0]=req.user_cmd.x
-            self.goal[1]=req.user_cmd.y
-            self.goal[2]=req.user_cmd.z
+            goal = [req.user_cmd.x, req.user_cmd.y, req.user_cmd.z]
 
-            self.auto_mode(self.goal)
+            response = self.auto_mode(goal)
             print("CENTRAL NODE: Auto mode finished.")
-            self.mtx_travel.acquire()
-            self.travel=False # EL UAV YA NO VIAJA
-            self.vc_travel.notify_all()
-            self.mtx_travel.release()
-            return True
+            
+            if response:
+                self.mtx_travel.acquire()
+                self.travel=False # EL UAV YA NO VIAJA
+                self.vc_travel.notify()
+                self.mtx_travel.release()
+
+            return response
 
             
         elif req.user_cmd.command=='gohome':
@@ -321,7 +355,7 @@ class user_interface_server():
 
             self.mtx_travel.acquire()
             self.travel=False # EL UAV YA NO VIAJA
-            self.vc_travel.notify_all()
+            self.vc_travel.notify()
             self.mtx_travel.release()
 
             return True
@@ -350,10 +384,6 @@ class user_interface_server():
             self.idle_mode()
             print("CENTRAL NODE: Idle mode set.")
 
-            self.mtx_travel.acquire()
-            self.travel=False # EL UAV YA NO VIAJA
-            self.vc_travel.notify_all()
-            self.mtx_travel.release()
             return True
 
         elif req.user_cmd.command=='drop':
