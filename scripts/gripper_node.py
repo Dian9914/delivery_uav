@@ -36,7 +36,7 @@ class gripper_server():
 
     def start_server(self):
         rospy.init_node('gripper_node')
-        s = rospy.Service('/del_uav/gripper_node/control', gripper_srv, self.gripper_handler)
+        s = rospy.Service('/del_uav/gripper_cmd', gripper_srv, self.gripper_handler)
         print("GRIPPER NODE: Gripper control ready.")
         rospy.spin()
 

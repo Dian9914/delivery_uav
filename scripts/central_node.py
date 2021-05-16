@@ -38,7 +38,7 @@ class user_interface_server():
         self.ual_takeoff = service_client('/ual/take_off',TakeOff)
         self.ual_goto = service_client('/ual/go_to_waypoint',GoToWaypoint)
         self.ual_land = service_client('/ual/land',Land)
-        self.gripper = service_client('/del_uav/gripper_node/control',gripper_srv)
+        self.gripper = service_client('/del_uav/gripper_cmd',gripper_srv)
         # Faltan los servicios que se comunican con el planner
 
 
@@ -254,7 +254,7 @@ class user_interface_server():
 
 
     def gohome(self):
-        #MODO AUTOMATICO: Principal modo de funcionamiento, el UAV se desplaza a un punto dado
+        #Vuelta a casa: va hacia el punto inicial y suelta la carga ahí
         print("GOHOME SERVICE [CN]: Starting the way to the home mode.")
 
 
@@ -426,7 +426,7 @@ class user_interface_server():
 
     def start_server(self):
         self.start_subscriber()
-        s = rospy.Service('uav_user_interface', user_interface, self.controller_handler)
+        s = rospy.Service('/del_uav/user_interface', user_interface, self.controller_handler)
         print("CENTRAL NODE: User Interface ready.")
         rospy.spin()
 
