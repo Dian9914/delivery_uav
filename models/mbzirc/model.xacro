@@ -30,16 +30,21 @@
   </joint>
 
   <!-- Include lidar-->
-  <xacro:include filename="$(find delivery_uav)/models/mbzirc/lidar_2d.xacro" />
+
+  <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro"/>
+  <xacro:VLP-16 parent="base_link" name="uav_ground_truth" topic="/uav_velodyne_points" organize_cloud="false" hz="10" samples="440" gpu="false">
+  <origin xyz="0 0 0.4" rpy="0 0 0"/>
+  </xacro:VLP-16>
+  <!--<xacro:include filename="$(find delivery_uav)/models/mbzirc/lidar_3d.xacro" /> -->
 
   <!-- Prueba lidar tutorial-->
 <!--   <xacro:include filename="$(find delivery_uav)/models/mbzirc/lidar_2.xacro" /> -->
 
-  <!-- Join the uav to the lidar-->
+  <!-- Join the uav to the lidar
   <joint name="uav_lidar_joint" type="fixed">
     <parent link="base_link"/>
     <child link="lidar_base"/>
-  </joint>
+  </joint>-->
 
   <!-- Posicion absoluta para debugging-->
   <xacro:include filename="$(find delivery_uav)/models/mbzirc/absolute_pos.xacro" />
