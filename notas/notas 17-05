@@ -1,0 +1,6 @@
+- cambiado el lidar por uno externo, fuente:
+https://bitbucket.org/DataspeedInc/velodyne_simulator/src/master/
+
+- Arreglada simulacion en puntos distintos al origen
+
+- Central_node 1.0 terminado. Resta decidir que hacer con la localizacion

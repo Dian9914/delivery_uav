@@ -7,7 +7,7 @@ from nav_msgs.msg import Odometry
 
 import rospy
 from threading import Lock, Condition
-from service_client import service_client #esta bien, aunque marque error. Odio 
+from service_client import service_client #esta bien, aunque marque error. 
 
 class user_interface_server():
     def __init__(self):
@@ -256,10 +256,36 @@ class user_interface_server():
     def gohome(self):
         #Vuelta a casa: va hacia el punto inicial y suelta la carga ahí
         print("GOHOME SERVICE [CN]: Starting the way to the home mode.")
+        print("GOHOME SERVICE [CN]: Requesting auto mode service with goal set in home.")
+
+        response = self.auto_mode(self.home)
+
+        if not response:
+            print("GOHOME SERVICE [CN]: Auto mode aborted.")
+            return False
+
+        print("GOHOME SERVICE [CN]: Home reached. Requesting landing")
+        self.mtx_ready.acquire()
+        request = Land._request_class()
+        response = self.ual_land.single_response(request)
+        while not response:     
+            print('GOHOME SERVICE  [CN]: Error with Land.')
+            entrada = raw_input('GOHOME SERVICE  [CN]: Try again? [S/n] ->')     #existe en python2 para obtener texto por teclado
+            if entrada == 'S':    # Si la respuesta es si, reiniciamos la conexion y reintentamos
+                self.ual_land.is_avalible()
+                response = self.ual_land.single_response(request)
+            elif entrada == 'n':    # Si la respuesta es no, el sistema abortara el inicio y devolvera False
+                print('GOHOME SERVICE  [CN]: Aborting landing.')
+                self.mtx_ready.release()
+                break
+            else:
+                print('GOHOME SERVICE  [CN]: Unrecogniced input.')
+                continue
+        
+        self.mtx_ready.release()
 
 
-
-
+        return response 
 
 
     def controller_handler(self, req):
@@ -315,11 +341,11 @@ class user_interface_server():
             response = self.auto_mode(goal)
             print("CENTRAL NODE: Auto mode finished.")
             
-            if response:
-                self.mtx_travel.acquire()
+            self.mtx_travel.acquire()
+            if self.travel == True: # si no se ha abortado usando idle, travel seguira a True
                 self.travel=False # EL UAV YA NO VIAJA
                 self.vc_travel.notify()
-                self.mtx_travel.release()
+            self.mtx_travel.release()
 
             return response
 
@@ -345,20 +371,26 @@ class user_interface_server():
             self.mtx_started.release()
 
             # Ejecuto el codigo
-            self.gohome()
-            print("CENTRAL NODE: Home point reached.")
+            response = self.gohome()
 
-            # El sistema ya no esta iniciado
-            self.mtx_started.acquire()
-            self.started = False
-            self.mtx_started.release()
 
             self.mtx_travel.acquire()
-            self.travel=False # EL UAV YA NO VIAJA
-            self.vc_travel.notify()
+            if self.travel == True: # si no se ha abortado usando idle, travel seguira a True
+                self.travel=False # EL UAV YA NO VIAJA
+                self.vc_travel.notify()
             self.mtx_travel.release()
 
-            return True
+            if response: 
+                print("CENTRAL NODE: Home point reached.")
+
+                # El sistema ya no esta iniciado
+                self.mtx_started.acquire()
+                self.started = False
+                self.mtx_started.release()
+            else:
+                print("CENTRAL NODE: Couldnt reach home.")
+
+            return response
 
         elif req.user_cmd.command=='idle':
             print("CENTRAL NODE: Requested idle mode.")
