@@ -1,0 +1,12 @@
+VERSION 0.2
+
+Implementados el nodo central y el nodo de gripper, ya tenemos una interfaz entre el usuario y el UAV, pudiendo tanto actuar sobre el gripper
+como sobre el propio movimiento del UAV.
+
+Sin embargo, quedan por implementar el locacalizador y el planificador.
+El planificador no es un gran problema. Debe tomar los datos del mapa y dos puntos dados por el nodo central y calcular una trayectoria entre ellos.
+Esto es independiente de la simulación y de gazebo, por lo que el desarrollo del planificador puede quedar en un plano aislado.
+
+El localizador, por su parte, plantea varios desafios. El primero es que para que la localización funcione, esta debe converger utilizando los datos de varias
+medidas, por lo que es necesario que el UAV pueda moverse antes de tener datos de localizacion fiables. Esto planteará cambios futuros al nodo central y a como
+interactuamos sobre UAV a traves de UAL.
