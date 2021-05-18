@@ -32,7 +32,7 @@
   <!-- Include lidar-->
 
   <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro"/>
-  <xacro:VLP-16 parent="base_link" name="uav_ground_truth" topic="/uav_velodyne_points" organize_cloud="false" hz="10" samples="440" gpu="false">
+  <xacro:VLP-16 parent="base_link" name="velodyne" topic="/uav_velodyne_points" organize_cloud="false" hz="10" samples="440" gpu="false">
   <origin xyz="0 0 0.4" rpy="0 0 0"/>
   </xacro:VLP-16>
   <!--<xacro:include filename="$(find delivery_uav)/models/mbzirc/lidar_3d.xacro" /> -->

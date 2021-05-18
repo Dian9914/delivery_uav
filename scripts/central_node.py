@@ -4,6 +4,7 @@ from delivery_uav.srv import gripper_srv, user_interface
 from delivery_uav.msg import gripper_state
 from uav_abstraction_layer.srv import GoToWaypoint, Land, TakeOff
 from nav_msgs.msg import Odometry
+from geometry_msgs.msg import PoseStamped
 
 import rospy
 from threading import Lock, Condition
@@ -12,9 +13,9 @@ from service_client import service_client #esta bien, aunque marque error.
 class user_interface_server():
     def __init__(self):
         # Inicializacion de los parametros del sistema
-        self.home = [0, 0, 0]   #punto en el que se ejecuta start en coordenadas mapa
+        self.home = [0, 0, 0]   #punto en el que se ejecuta start en coordenadas mapa (punto inciial)
         self.trayectory = []        #matriz donde se guardara la trayectoria dada por el planner
-        self.pose = [0, 0, 0]   #posicion del UAV en coordenadas mapa dada por el localizador
+        self.pose = [0, 0, 0]   #posicion del UAV usada por UAL. Idealmente, estara en coordenadas mapa.
 
         self.mtx_auto = Lock()
         self.mtx_ready = Lock()
@@ -43,7 +44,7 @@ class user_interface_server():
 
 
     def subscriber_callback(self, data):
-        self.pose = [data.pose.pose.position.x, data.pose.pose.position.y, data.pose.pose.position.z]
+        self.pose = [data.pose.position.x, data.pose.position.y, data.pose.position.z]
         self.pose[0] = round(self.pose[0])
         self.pose[1] = round(self.pose[1])
         self.pose[2] = round(self.pose[2])
@@ -53,7 +54,7 @@ class user_interface_server():
         try:
             # IMPORTANTE:
             # CAMBIAR POR EL TOPIC CORRESPONDIENTE CUANDO EL LOCALIZADOR ESTE IMPLEMENTADO
-            rospy.Subscriber("uav_ground_truth", Odometry, self.subscriber_callback)
+            rospy.Subscriber("/ual/pose", PoseStamped, self.subscriber_callback)
         except:
             print('SUBSCRIBER HANDLER [CN]: Unexpected error.')
             return False
@@ -124,7 +125,7 @@ class user_interface_server():
         # PRIMERO LLAMARIAMOS AL SERVICIO DEL PLANNER QUE NOS SUMINISTRE LA TRAYECTORIA
         # IMPORTANTE:
         # COMO NO DISPONEMOS DE PLANNER, SUMINISTRAMOS UNA TRAYECTORIA INVENTADA
-        self.trayectory = [[-1,-1,3],[-2,-2,3],[-2,-2,4],[-3,-3,4],[-4,-4,4]]
+        self.trayectory = [[-1,-1,3],[-2,-2,3],[-2,-2,4],[-3,-3,4],[-4,-4,4],[-3,-3,4],[-2,-2,4],[-2,-2,3],[-1,-1,3],[0,0,3]]
 
         # En este caso vamos a llamar al mismo servicio de forma recurrente, por lo que es interesante usar una conexion persistente con el servicio
         # Por tanto, inicializaremos la conexion antes de entrar al bucle
@@ -254,7 +255,7 @@ class user_interface_server():
 
 
     def gohome(self):
-        #Vuelta a casa: va hacia el punto inicial y suelta la carga ahí
+        #Vuelta a casa: va hacia el punto inicial y suelta la carga ahi
         print("GOHOME SERVICE [CN]: Starting the way to the home mode.")
         print("GOHOME SERVICE [CN]: Requesting auto mode service with goal set in home.")
 
@@ -285,7 +286,7 @@ class user_interface_server():
         self.mtx_ready.release()
 
 
-        return response 
+        return True 
 
 
     def controller_handler(self, req):
@@ -455,10 +456,28 @@ class user_interface_server():
             print("CENTRAL NODE: Incorrect command.")
             return False
 
+    def initial_lap(self):
+        print("CENTRAL NODE: Starting initial lap for localization convergence.")
+        # Este metodo debe hacer que el UAV se eleve unos metros y comience a navegar en bucle abierto, 
+        # usando unicamente el lidar para evitar obstaculos, hasta que la localizacion haya convergido.
+        # Aqui se plantean dos problematicas:
+        # - La primera es que debemos poder pilotar en bucle abierto, sin depender del valor de UAL/pose
+        #   porque este no habra convergido todavia. Los servicios de UAL NO FUNCIONARIAN CORRECTAMENTE
+        # - La segunda es que debemos poder saber cuando UAL/pose ha convergido. 
+        #   Podemos usar un servicio que sea llamado desde localizacion o analizar desde aqui los datos
+
+        print("CENTRAL NODE: Localization successfull.")
+
+
 
     def start_server(self):
         self.start_subscriber()
         s = rospy.Service('/del_uav/user_interface', user_interface, self.controller_handler)
+        # IMPORTANTE:
+        # antes de iniciar los servicios, debemos dar una vuelta sin objetivo claro
+        # a fin de que la localizacion pueda converger
+        self.initial_lap()
+        # Para esto, debemos navegar usando solo la informacion del lidar, buscando no chocarnos con nada
         print("CENTRAL NODE: User Interface ready.")
         rospy.spin()
 
