@@ -15,7 +15,8 @@
 		<param name="use_gui" value="true"/>
 	</node>
 	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
-	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find delivery_uav)/config/visualize.rviz" />
+	<!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find delivery_uav)/config/visualize.rviz" /> -->
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find delivery_uav)/config/visualize_pointcloud.rviz" />
 
 	<node name="map_server" pkg="map_server" type="map_server" args="$(find delivery_uav)/maps/$(arg map_name)" />
 
