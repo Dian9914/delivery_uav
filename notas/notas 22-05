@@ -1,0 +1,56 @@
+Hoy, investigación 
+
+Partimos de que Velodyne no sabemos implementarlo todavía debido a diversos errores
+PENDIENTE: probar a compilar el plugin en otro PC (portátil de Ale por ejemplo) y copiar los plugins a /lib de nuestro trabajo
+
+Sobre PCL:
+Uso general de PCL: https://pointclouds.org/documentation/tutorials/
+un tutorial (c++): https://dabit-industries.github.io/turtlebot2-tutorials/13-ROSPCL.html
+antiguo, pero tiene info de PointCloud2: http://wiki.ros.org/pcl/Overview
+la página de PCL: https://pointclouds.org/
+tutorial mas nuevo? https://pcl.readthedocs.io/projects/tutorials/en/latest/
+
+
+Para python: Busca python-pcl
+IMPORTANTE: python-pcl no es tan completo como pcl de c++, puede dar lugar a limitaciones
+Para instalar la libreria pcl: "pip install python-pcl"
+Necesitas tener instalado libpcl-dev en ubuntu
+https://github.com/strawlab/python-pcl
+https://python-pcl-fork.readthedocs.io/en/rc_patches4/tutorial/index.html
+https://strawlab.github.io/python-pcl/
+
+
+ros_numpy -> librerias que se encargan de la conversión entre cosas leibles y pointcloud2
+https://github.com/eric-wieser/ros_numpy
+
+convertir pointcloud2 a pcl.pointcloud (mira, habla de ransac): 
+https://stackoverflow.com/questions/39772424/how-to-effeciently-convert-ros-pointcloud2-to-pcl-point-cloud-and-visualize-it-i
+
+Parece que ros_numpy se encarga de la conversión de puntos a xyz
+
+tutorial de ros_industrial para python-pcl (aunque tiene cosas de c++):
+https://industrial-training-master.readthedocs.io/en/melodic/_source/session5/Simple-PCL-Interface-for-Python.html
+
+esto con velodyne (problemas de latencia!): https://stackoverflow.com/questions/62061544/real-time-point-cloud-processing-and-latency
+
+desencriptar los pointcloud2: https://answers.ros.org/question/202787/using-pointcloud2-data-getting-xy-points-in-python/
+
+funcion doTransform: https://answers.ros.org/question/291735/pointcloud2-transform-cpython/
+
+pcl_ros tiene un nodo que convierte de .pcd (donde guardamos el pointcloud como archivo) a pointcloud y viceversa, tambien a imagen
+A su vez, tiene funciones de filtros
+
+OBJETIVO: procesar un pointcloud2
+INSTALADO: ros_numpy
+
+
+INVESTIGAR: exportar mapa en .pcd
+un nodo de ejemplo: https://github.com/ningwang1028/point_cloud_map_server
+
+
+
+
+Algoritmo ICP
+Literal el primer resultado: http://www.dccia.ua.es/dccia/inf/asignaturas/Vision/vision-tema6.pdf
+Habla del algoritmo, y también de PCL
+más pcl + icp: https://programmerclick.com/article/7816164431/
