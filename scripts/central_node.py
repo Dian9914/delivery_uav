@@ -77,7 +77,7 @@ class user_interface_server():
         response = self.gripper.single_response(request)
         # Comprobamos el resultado de nuestra llamada.
         if not response:
-            print('START SERVICE [CN]: Error with gripper. Cant close the gripper.')
+            print('START SERVICE [CN]: Error with gripper. Cannot close the gripper.')
             return False
 
         request = TakeOff._request_class() #la request que se envia al servicio takeoff
@@ -100,7 +100,7 @@ class user_interface_server():
                 self.mtx_ready.release()
                 return False
             else:
-                print('START SERVICE [CN]: Unrecogniced input.')
+                print('START SERVICE [CN]: Unrecognised input.')
                 continue
         
 
@@ -136,7 +136,7 @@ class user_interface_server():
             print('AUTO MODE [CN]: Error with GoToWaypoint service. Aborting travel')
             return False
         else:
-            print('AUTO MODE [CN]: Initialiced persistent GoToWaypoint service.')
+            print('AUTO MODE [CN]: Started persistent GoToWaypoint service.')
 
         # Ademas, generamos el mensaje que pasaremos al servicio ya que el tipo de este no va a cambiar durante la ejecucion
         request = GoToWaypoint._request_class()
@@ -173,7 +173,7 @@ class user_interface_server():
                     self.mtx_ready.release()
                     break
                 else:
-                    print('AUTO MODE [CN]: Unrecogniced input.')
+                    print('AUTO MODE [CN]: Unrecognised input.')
                     continue
             # debemos esperar a haber llegado al punto para hacer la siguiente llamada. Para ello, usaremos rospy.sleep
             wait = rospy.Rate(2) # vamos a esperar la condicion con una frecuencia de 2Hz, es decir, que el proceso estara
@@ -186,14 +186,14 @@ class user_interface_server():
 
             # Comprobamos el resultado de nuestra llamada a servicio.
             print('AUTO MODE [CN]: Succesfully reached waypoint [%d, %d, %d].'%(waypoint[0],waypoint[1],waypoint[2]))
-            print('DEBUG AUTO MODE [CN]: Actual position is [%d, %d, %d].'%(self.pose[0],self.pose[1],self.pose[2]))
+            print('DEBUG AUTO MODE [CN]: Current position is [%d, %d, %d].'%(self.pose[0],self.pose[1],self.pose[2]))
 
         # Comprobamos que hayamos llegado al destino
         if self.pose[0] == goal[0] and self.pose[1] == goal[1] and self.pose[2] == goal[2]:
             print('AUTO MODE [CN]: Succesfully reached goal [%d, %d, %d].'%(goal[0],goal[1],goal[2]))
             result = True
         else:
-            print('AUTO MODE [CN]: Couldnt reach goal. Instead, arrived at [%d, %d, %d].'%(self.pose[0],self.pose[1],self.pose[2]))
+            print('AUTO MODE [CN]: Could not reach goal. Instead, arrived at [%d, %d, %d].'%(self.pose[0],self.pose[1],self.pose[2]))
             result = False
             
         # Cerramos la conexion
@@ -222,7 +222,7 @@ class user_interface_server():
     def drop_charge(self):
         #SOLTAR LA CARGA: Cuando se le llama, abre el gripper para soltar la carga
         #Devuelve True si la carga ha sido soltada, y False si ha ocurrido algun error
-        print("DROP SERVICE [CN]: Starting the drop of the charge.")
+        print("DROP SERVICE [CN]: Starting charge drop off.")
 
         # Espero a que el UAV este estable
         self.mtx_ready.acquire()
@@ -237,7 +237,7 @@ class user_interface_server():
         self.mtx_ready.release() 
         # Comprobamos el resultado de nuestra llamada.
         if not response:
-            print('DROP SERVICE [CN]: Error with gripper. Cant open the gripper.')
+            print('DROP SERVICE [CN]: Error with gripper. Cannot open the gripper.')
             return False
 
         # Creo el request que se enviara al servicio. Deja el gripper en estado neutro.
@@ -247,7 +247,7 @@ class user_interface_server():
         # Envio un unico request
         response = self.gripper.single_response(request)
         if not response:
-            print('DROP SERVICE [CN]: WARNING: cant reach gripper.')
+            print('DROP SERVICE [CN]: WARNING: cannot reach gripper.')
 
         print('DROP SERVICE [CN]: Charge dropped succesfully')
         return True
@@ -256,7 +256,7 @@ class user_interface_server():
 
     def gohome(self):
         #Vuelta a casa: va hacia el punto inicial y suelta la carga ahi
-        print("GOHOME SERVICE [CN]: Starting the way to the home mode.")
+        print("GOHOME SERVICE [CN]: Starting home path mode.")
         print("GOHOME SERVICE [CN]: Requesting auto mode service with goal set in home.")
 
         response = self.auto_mode(self.home)
@@ -270,7 +270,7 @@ class user_interface_server():
         request = Land._request_class()
         response = self.ual_land.single_response(request)
         while not response:     
-            print('GOHOME SERVICE  [CN]: Error with Land.')
+            print('GOHOME SERVICE  [CN]: Error with landing.')
             entrada = raw_input('GOHOME SERVICE  [CN]: Try again? [S/n] ->')     #existe en python2 para obtener texto por teclado
             if entrada == 'S':    # Si la respuesta es si, reiniciamos la conexion y reintentamos
                 self.ual_land.is_avalible()
@@ -280,7 +280,7 @@ class user_interface_server():
                 self.mtx_ready.release()
                 break
             else:
-                print('GOHOME SERVICE  [CN]: Unrecogniced input.')
+                print('GOHOME SERVICE  [CN]: Unrecognised input.')
                 continue
         
         self.mtx_ready.release()
@@ -389,7 +389,7 @@ class user_interface_server():
                 self.started = False
                 self.mtx_started.release()
             else:
-                print("CENTRAL NODE: Couldnt reach home.")
+                print("CENTRAL NODE: Could not reach home.")
 
             return response
 
@@ -446,7 +446,7 @@ class user_interface_server():
                 print("CENTRAL NODE: Charge dropped.")
                 self.charge=False # LA CARGA YA NO ESTA A BORDO
             else:
-                print("CENTRAL NODE: Error with gripper. Cant drop the charge.")
+                print("CENTRAL NODE: Error with gripper. Cannot drop the charge.")
 
             self.mtx_charge.release() #libero el servicio drop
 
@@ -466,7 +466,7 @@ class user_interface_server():
         # - La segunda es que debemos poder saber cuando UAL/pose ha convergido. 
         #   Podemos usar un servicio que sea llamado desde localizacion o analizar desde aqui los datos
 
-        print("CENTRAL NODE: Localization successfull.")
+        print("CENTRAL NODE: Localization successful.")
 
 
 
