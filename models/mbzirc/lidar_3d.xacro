@@ -42,7 +42,8 @@
         <visual>
             <origin xyz="0 0 ${1.5 * lid_length + 0.01}" rpy="0 0 0"/>
             <geometry>
-                <cylinder radius="${lid_radius}" length="0.07357"/>
+                <!-- <cylinder radius="${lid_radius}" length="0.07357"/> -->
+                <mesh filename="package://delivery_uav/models/mbzirc/meshes/hokuyo.dae" scale="1.75 1.75 1.75"/>
             </geometry>
         </visual>
 
@@ -61,7 +62,7 @@
         <parent link="lidar_base"/>
         <child link="lidar_top"/>
         <origin xyz="0 0 -0.036785" rpy="0 0 0"/>
-            <limit lower="-10000000000000000000" upper="1000000000000000000" effort="10" velocity="3"/>
+            <limit lower="0" upper="0.00001" effort="10" velocity="3"/>
             <axis xyz="0 0 1"/>
      </joint>
 
@@ -74,16 +75,16 @@
        <ray>
          <scan>
            <horizontal>
-             <samples>2000</samples>
+             <samples>200</samples>
              <resolution>1</resolution>
              <min_angle>-3.12</min_angle>
              <max_angle>3.1415</max_angle>
            </horizontal>
            <vertical>
-             <samples>32</samples>
+             <samples>20</samples>
              <resolution>1</resolution>
              <min_angle>-0.53529248</min_angle>
-             <max_angle>0.18622663</max_angle>
+             <max_angle>0.53529248</max_angle>
            </vertical>
          </scan>
           <range>
