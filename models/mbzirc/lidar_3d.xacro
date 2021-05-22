@@ -69,15 +69,15 @@
     <sensor type="ray" name="laz">
        <always_on>true</always_on>
        <pose>0 0 0.117 0 0 0</pose>
-       <visualize>true</visualize>
-       <update_rate>30</update_rate>
+       <visualize>false</visualize>
+       <update_rate>10</update_rate>
        <ray>
          <scan>
            <horizontal>
-             <samples>1</samples>
+             <samples>2000</samples>
              <resolution>1</resolution>
-             <min_angle>-0.15</min_angle>
-             <max_angle>0.15</max_angle>
+             <min_angle>-3.12</min_angle>
+             <max_angle>3.1415</max_angle>
            </horizontal>
            <vertical>
              <samples>32</samples>
@@ -98,8 +98,9 @@
       </noise>
       </ray>
       <!-- TO DO: probar que el plugin funcione-->
+      <!-- la libreria block laser es la que hace que funcione con pointcloud-->
       <plugin name="gazebo_ros_block_laser_controller" filename="libgazebo_ros_block_laser.so">
-        <topicName>/uav_3d_scan</topicName>
+        <topicName>/uav_laser_scan</topicName>
         <frameName>lidar_top</frameName>
       </plugin>
    </sensor>
