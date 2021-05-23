@@ -1,0 +1,9 @@
+1- INSTALAR PAQUETE VELODYNE: 
+https://bitbucket.org/DataspeedInc/velodyne_simulator/src/master/
+
+2- CAMBIAR EN velodyne_descripcion/urdf/VLP-16.urdf.xacro la linea:
+xmlns:xacro="http://www.ros.org/wiki/xacro"
+por:
+xmlns:xacro="http://ros.org/wiki/xacro"
+
+3- HACER CATKIN_MAKE
