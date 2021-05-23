@@ -1,0 +1,4 @@
+waypoint start
+waypoint goal
+---
+planner_route route

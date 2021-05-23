@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from delivery_uav.srv import gripper_srv, user_interface
-from delivery_uav.msg import gripper_state
+from delivery_uav.srv import gripper_srv, user_interface, planner_srv
+from delivery_uav.msg import gripper_state, waypoint, planner_route
 from uav_abstraction_layer.srv import GoToWaypoint, Land, TakeOff
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped
@@ -123,6 +123,13 @@ class user_interface_server():
         print("AUTO MODE [CN]: Starting the auto mode. The goal set is [%d, %d, %d]."%(goal[0],goal[1],goal[2]))
 
         # PRIMERO LLAMARIAMOS AL SERVICIO DEL PLANNER QUE NOS SUMINISTRE LA TRAYECTORIA
+        request=planner_srv._request_class()
+        request.start.x=self.pose[0]
+        request.start.y=self.pose[1]
+        request.start.z=self.pose[2]
+        request.goal.x=self.goal[0]
+        request.goal.y=self.goal[1]
+        request.goal.z=self.goal[2]
         # IMPORTANTE:
         # COMO NO DISPONEMOS DE PLANNER, SUMINISTRAMOS UNA TRAYECTORIA INVENTADA
         self.trayectory = [[-1,-1,3],[-2,-2,3],[-2,-2,4],[-3,-3,4],[-4,-4,4],[-3,-3,4],[-2,-2,4],[-2,-2,3],[-1,-1,3],[0,0,3]]
@@ -337,7 +344,7 @@ class user_interface_server():
             self.mtx_started.release()
 
             # Ejecuto el codigo
-            goal = [req.user_cmd.x, req.user_cmd.y, req.user_cmd.z]
+            goal = [req.user_cmd.goal.x, req.user_cmd.goal.y, req.user_cmd.goal.z]
 
             response = self.auto_mode(goal)
             print("CENTRAL NODE: Auto mode finished.")
