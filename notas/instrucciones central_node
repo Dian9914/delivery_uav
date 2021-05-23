@@ -1,0 +1,4 @@
+Este nodo actua de interfaz entre el usuario y el sistema, conectando a su vez los distintos nodos del sistema con UAL 
+para actuar sobre el UAV.
+
+Para usarlo, basta llamar al servicio /del_uav/user_interface 
