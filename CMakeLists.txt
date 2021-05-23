@@ -53,6 +53,8 @@ add_message_files(
   FILES
   gripper_state.msg
   user_msg.msg
+  waypoint.msg
+  planner_route.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -60,6 +62,7 @@ add_message_files(
    FILES
    gripper_srv.srv
    user_interface.srv
+   planner_srv.srv
  )
 
 ## Generate actions in the 'action' folder

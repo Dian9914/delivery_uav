@@ -1,0 +1,5 @@
+velodyne: mirar instrucciones especificas
+
+joint state publisher: sudo apt install ros-kinetic-joint-state-publisher-gui
+
+UAL: mirar readme
