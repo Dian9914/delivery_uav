@@ -88,7 +88,7 @@
            </vertical>
          </scan>
           <range>
-           <min>0.6</min>
+           <min>0.59</min>
            <max>30</max>
            <resolution>0.02</resolution>
          </range>
