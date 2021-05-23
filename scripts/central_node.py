@@ -40,7 +40,7 @@ class user_interface_server():
         self.ual_goto = service_client('/ual/go_to_waypoint',GoToWaypoint)
         self.ual_land = service_client('/ual/land',Land)
         self.gripper = service_client('/del_uav/gripper_cmd',gripper_srv)
-        # Faltan los servicios que se comunican con el planner
+        self.planner = service_client('/del_uav/planner',planner_srv)
 
 
     def subscriber_callback(self, data):
@@ -123,13 +123,19 @@ class user_interface_server():
         print("AUTO MODE [CN]: Starting the auto mode. The goal set is [%d, %d, %d]."%(goal[0],goal[1],goal[2]))
 
         # PRIMERO LLAMARIAMOS AL SERVICIO DEL PLANNER QUE NOS SUMINISTRE LA TRAYECTORIA
-        request=planner_srv._request_class()
-        request.start.x=self.pose[0]
-        request.start.y=self.pose[1]
-        request.start.z=self.pose[2]
-        request.goal.x=self.goal[0]
-        request.goal.y=self.goal[1]
-        request.goal.z=self.goal[2]
+        request = planner_srv._request_class()
+
+        request.start=[self.pose[0],self.pose[1],self.pose[2]]
+        request.goal=[self.goal[0],self.goal[1],self.goal[2]]
+
+        #response = self.planner.single_response(request)
+        #if not response:
+        #    print('AUTO MODE [CN]: Error with Planner service. Aborting travel')
+        #    return False
+        #else:
+        #    print('AUTO MODE [CN]: Succesfull Planner service call.')
+
+        #self.trayectory = response
         # IMPORTANTE:
         # COMO NO DISPONEMOS DE PLANNER, SUMINISTRAMOS UNA TRAYECTORIA INVENTADA
         self.trayectory = [[-1,-1,3],[-2,-2,3],[-2,-2,4],[-3,-3,4],[-4,-4,4],[-3,-3,4],[-2,-2,4],[-2,-2,3],[-1,-1,3],[0,0,3]]
