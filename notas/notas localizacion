@@ -1,0 +1,19 @@
+PARTE 1: PREDICCION
+Para liodom necesitamos obtener una transformacion a partir de dos pointcoulds. Para ello, podemos usar
+python_pcl o open3d. 
+
+Solución con open3d: https://stackoverflow.com/questions/54761250/alternative-to-pcl-on-python-for-processing-and-visualization
+Primero debemos convertir de pointcould2 a open3d.poincloud. Podemos investigar esto: 
+https://www.programcreek.com/python/example/99841/sensor_msgs.msg.PointCloud2
+Una vez tenemos esa conversion hecha, podemos obtener la solucion con este metodo:
+http://www.open3d.org/docs/latest/tutorial/Advanced/global_registration.html
+http://www.open3d.org/docs/latest/tutorial/Basic/icp_registration.html
+
+documentation para open3d: http://www.open3d.org/docs/release/index.html
+
+Solución con plc:
+primero debemos pasar de poincloud2 a plc.poincloud:
+https://stackoverflow.com/questions/39772424/how-to-effeciently-convert-ros-pointcloud2-to-pcl-point-cloud-and-visualize-it-i
+Una vez tenemos eso, debemos aplicar ICP: POR INVESTIGAR
+
+PARTE 2: ACTUALIZACION

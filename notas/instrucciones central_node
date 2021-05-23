@@ -4,4 +4,8 @@ para actuar sobre el UAV.
 Para usarlo, basta llamar al servicio /del_uav/user_interface y mandar distintos comandos:
 - start : inicia el sistema, cierra el gripper y despega a 3 metros. Hasta que no has hecho start, el sistema no 
 acepta otros comandos hasta que no se ha ejecutado start
-- auto : requiere 
+- auto : si le enviamos un goal valido, el uav se desplaza hacia ese punto siguiendo una trayectoria dada por el planner
+- gohome : el uav vuelve al punto de partida, aterriza y desactiva el sistema, immpidiendo nuevas ordenes hasta que se 
+reciva start de nuevo
+- drop : deja caer la carga 
+- idle : cancela la ruta que se este siguiendo en ese momento y deja al UAV estatico en la posicion en la que este
