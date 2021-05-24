@@ -36,9 +36,9 @@ class user_interface_server():
         self.vc_travel = Condition(self.mtx_travel)
 
         # inicializacion de los clientes para los distintos servicios a usar
-        self.ual_takeoff = service_client('/ual/take_off',TakeOff)
-        self.ual_goto = service_client('/ual/go_to_waypoint',GoToWaypoint)
-        self.ual_land = service_client('/ual/land',Land)
+        self.takeoff = service_client('/ual/take_off',TakeOff)
+        self.goto = service_client('/ual/go_to_waypoint',GoToWaypoint)
+        self.land = service_client('/ual/land',Land)
         self.gripper = service_client('/del_uav/gripper_cmd',gripper_srv)
         self.planner = service_client('/del_uav/planner',planner_srv)
 
@@ -54,7 +54,7 @@ class user_interface_server():
         try:
             # IMPORTANTE:
             # CAMBIAR POR EL TOPIC CORRESPONDIENTE CUANDO EL LOCALIZADOR ESTE IMPLEMENTADO
-            rospy.Subscriber("/ual/pose", PoseStamped, self.subscriber_callback)
+            pose_subs=rospy.Subscriber("/ual/pose", PoseStamped, self.subscriber_callback)
         except:
             print('SUBSCRIBER HANDLER [CN]: Unexpected error.')
             return False
@@ -85,7 +85,7 @@ class user_interface_server():
         # mas adelante, se llamara al planner para preguntarle cual es la altura segura para elevarse
 
         # llamo al servicio takeoff
-        response = self.ual_takeoff.single_response(request)
+        response = self.takeoff.single_response(request)
 
         # se evalua la respuesta
         # Mientras que la respuesta sea un error, el sistema seguira preguntando al usuario si quiere reintentar el inicio
@@ -93,8 +93,8 @@ class user_interface_server():
             print('START SERVICE [CN]: Error with takeoff.')
             entrada = raw_input('START SERVICE [CN]: Try again? [S/n] ->')     #existe en python2 para obtener texto por teclado
             if entrada == 'S':    # Si la respuesta es si, el sistema esperara a que el servicio este de nuevo disponible y lo llamara
-                self.ual_takeoff.is_avalible()
-                response = self.ual_takeoff.single_response(request)
+                self.takeoff.is_avalible()
+                response = self.takeoff.single_response(request)
             elif entrada == 'n':    # Si la respuesta es no, el sistema abortara el inicio y devolvera False
                 print('START SERVICE [CN]: Aborting takeoff. System start aborted')
                 self.mtx_ready.release()
@@ -142,7 +142,7 @@ class user_interface_server():
 
         # En este caso vamos a llamar al mismo servicio de forma recurrente, por lo que es interesante usar una conexion persistente con el servicio
         # Por tanto, inicializaremos la conexion antes de entrar al bucle
-        response = self.ual_goto.persistent_init()
+        response = self.goto.persistent_init()
         # Es importante cerrar mas adelante esta conexion
         # Evaluamos la respuesta de la inicializacion
         if not response:
@@ -172,14 +172,14 @@ class user_interface_server():
             request.waypoint.pose.position.z = waypoint[2]
 
             #llamamos al servicio para comenzar el movimiento
-            response = self.ual_goto.persistent_response(request)
+            response = self.goto.persistent_response(request)
             while not response:     
                 print('AUTO MODE [CN]: Error with GoToWaypoint.')
                 entrada = raw_input('AUTO MODE [CN]: Try again? [S/n] ->')     #existe en python2 para obtener texto por teclado
                 if entrada == 'S':    # Si la respuesta es si, reiniciamos la conexion y reintentamos
-                    self.ual_goto.persistent_close()
-                    self.ual_goto.persistent_init()
-                    response = self.ual_goto.persistent_response(request)
+                    self.goto.persistent_close()
+                    self.goto.persistent_init()
+                    response = self.goto.persistent_response(request)
                 elif entrada == 'n':    # Si la respuesta es no, el sistema abortara el inicio y devolvera False
                     print('AUTO MODE [CN]: Error reaching waypoint [%d, %d, %d].'%(waypoint[0],waypoint[1],waypoint[2]))
                     print('AUTO MODE [CN]: Aborting auto_mode.')
@@ -210,7 +210,7 @@ class user_interface_server():
             result = False
             
         # Cerramos la conexion
-        response = self.ual_goto.persistent_close()
+        response = self.goto.persistent_close()
         if not response:
             print('AUTO MODE [CN]: WARNING: Error closing GoToWaypoint service.')
 
@@ -281,13 +281,13 @@ class user_interface_server():
         print("GOHOME SERVICE [CN]: Home reached. Requesting landing")
         self.mtx_ready.acquire()
         request = Land._request_class()
-        response = self.ual_land.single_response(request)
+        response = self.land.single_response(request)
         while not response:     
             print('GOHOME SERVICE  [CN]: Error with landing.')
             entrada = raw_input('GOHOME SERVICE  [CN]: Try again? [S/n] ->')     #existe en python2 para obtener texto por teclado
             if entrada == 'S':    # Si la respuesta es si, reiniciamos la conexion y reintentamos
-                self.ual_land.is_avalible()
-                response = self.ual_land.single_response(request)
+                self.land.is_avalible()
+                response = self.land.single_response(request)
             elif entrada == 'n':    # Si la respuesta es no, el sistema abortara el inicio y devolvera False
                 print('GOHOME SERVICE  [CN]: Aborting landing.')
                 self.mtx_ready.release()

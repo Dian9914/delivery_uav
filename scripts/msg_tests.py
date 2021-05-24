@@ -9,7 +9,6 @@ request = user_interface._request_class()
 
 response.goal.xyz=[1,2,3]
 
-
 print response
 print response.goal.xyz[1]
 

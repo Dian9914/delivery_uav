@@ -63,6 +63,7 @@ add_message_files(
    gripper_srv.srv
    user_interface.srv
    planner_srv.srv
+   goto_srv.srv
  )
 
 ## Generate actions in the 'action' folder
