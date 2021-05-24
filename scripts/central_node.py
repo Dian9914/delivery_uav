@@ -40,7 +40,7 @@ class user_interface_server():
         self.ual_goto = service_client('/ual/go_to_waypoint',GoToWaypoint)
         self.ual_land = service_client('/ual/land',Land)
         self.gripper = service_client('/del_uav/gripper_cmd',gripper_srv)
-        #self.planner = service_client('/del_uav/planner',planner_srv)
+        self.planner = service_client('/del_uav/planner',planner_srv)
 
 
     def subscriber_callback(self, data):
@@ -128,17 +128,17 @@ class user_interface_server():
         request.start=[self.pose[0],self.pose[1],self.pose[2]]
         request.goal=[goal[0],goal[1],goal[2]]
 
-        #response = self.planner.single_response(request)
-        #if not response:
-        #    print('AUTO MODE [CN]: Error with Planner service. Aborting travel')
-        #    return False
-        #else:
-        #    print('AUTO MODE [CN]: Succesfull Planner service call.')
+        response = self.planner.single_response(request)
+        if not response:
+            print('AUTO MODE [CN]: Error with Planner service. Aborting travel')
+            return False
+        else:
+            print('AUTO MODE [CN]: Succesfull Planner service call.')
 
-        #self.trayectory = response
+        self.trayectory = response
         # IMPORTANTE:
         # COMO NO DISPONEMOS DE PLANNER, SUMINISTRAMOS UNA TRAYECTORIA INVENTADA
-        self.trayectory = [[-1,-1,3],[-2,-2,3],[-2,-2,4],[-3,-3,4],[-4,-4,4],[-3,-3,4],[-2,-2,4],[-2,-2,3],[-1,-1,3],[0,0,3]]
+        #self.trayectory = [[-1,-1,3],[-2,-2,3],[-2,-2,4],[-3,-3,4],[-4,-4,4],[-3,-3,4],[-2,-2,4],[-2,-2,3],[-1,-1,3],[0,0,3]]
 
         # En este caso vamos a llamar al mismo servicio de forma recurrente, por lo que es interesante usar una conexion persistente con el servicio
         # Por tanto, inicializaremos la conexion antes de entrar al bucle
@@ -350,7 +350,7 @@ class user_interface_server():
             self.mtx_started.release()
 
             # Ejecuto el codigo
-            goal = [req.user_cmd.goal.x, req.user_cmd.goal.y, req.user_cmd.goal.z]
+            goal = req.user_cmd.goal.xyz
 
             response = self.auto_mode(goal)
             print("CENTRAL NODE: Auto mode finished.")
