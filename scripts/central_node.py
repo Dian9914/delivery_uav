@@ -125,8 +125,8 @@ class user_interface_server():
         # PRIMERO LLAMARIAMOS AL SERVICIO DEL PLANNER QUE NOS SUMINISTRE LA TRAYECTORIA
         request = planner_srv._request_class()
 
-        request.start=[self.pose[0],self.pose[1],self.pose[2]]
-        request.goal=[goal[0],goal[1],goal[2]]
+        request.start.xyz=[self.pose[0],self.pose[1],self.pose[2]]
+        request.goal.xyz=[goal[0],goal[1],goal[2]]
 
         response = self.planner.single_response(request)
         if not response:

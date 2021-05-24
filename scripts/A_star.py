@@ -89,9 +89,9 @@ class Planner:
         self.index_found = 0
         self.elemento_found = lista()
          # Paso 0: Determinamos los atributos de la celda actual y se introduce el punto en la lista abierta
-        self.celda_actual.punto = [data.start[0],data.start[1]]
-        self.celda_actual.padre = [data.start[0],data.start[1]]
-        self.celda_actual.h = self.manhattan_distance([data.start[0],data.start[1]], [data.goal[0],data.goal[1]])
+        self.celda_actual.punto = [data.start.xyz[0],data.start.xyz[1]]
+        self.celda_actual.padre = [data.start.xyz[0],data.start.xyz[1]]
+        self.celda_actual.h = self.manhattan_distance([data.start.xyz[0],data.start.xyz[1]], [data.goal.xyz[0],data.goal.xyz[1]])
         self.celda_actual.f = self.celda_actual.h
         self.lista_abierta.append(self.celda_actual) # append nos permite introducir elementos en vectores
 
@@ -106,7 +106,7 @@ class Planner:
 
 
             # Paso 2: Comprobar si el punto que se esta procesando es el destino
-            if (self.celda_actual.punto == [data.goal[0],data.goal[1]]): break  # me salgo del bucle
+            if (self.celda_actual.punto == [data.goal.xyz[0],data.goal.xyz[1]]): break  # me salgo del bucle
 
 
             # Paso 3: Calcular celdas vecinas a la actual              
@@ -160,7 +160,7 @@ class Planner:
                 # o que el punto no se encuentra en la lista abierta
                 if ((costeNuevo < self.elemento_found.g) or (temp == 0)):
                     # calculamos los parametros del punto
-                    point.h = self.manhattan_distance(point.punto, [data.goal[0],data.goal[1]])
+                    point.h = self.manhattan_distance(point.punto, [data.goal.xyz[0],data.goal.xyz[1]])
                     point.g = costeNuevo
                     point.f = point.h + point.g
                     point.padre = self.celda_actual.punto
@@ -185,7 +185,7 @@ class Planner:
         path = [] # vector con los puntos por los que pasaremos
         
          # mientras que 
-        while self.celda_actual.punto != data.start:
+        while self.celda_actual.punto != data.start.xyz:
             path.append(self.celda_actual.punto) # meto el punto actual
             # busco el padre en la lista para ver el punto, primero pongo que el padre sea el punto de la celda actual
             self.celda_actual.punto = self.celda_actual.padre
