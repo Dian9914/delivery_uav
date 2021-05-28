@@ -101,7 +101,7 @@
       <!-- TO DO: probar que el plugin funcione-->
       <!-- la libreria block laser es la que hace que funcione con pointcloud-->
       <plugin name="gazebo_ros_block_laser_controller" filename="libgazebo_ros_block_laser.so">
-        <topicName>/uav_laser_scan</topicName>
+        <topicName>/del_uav/uav_laser_scan</topicName>
         <frameName>lidar_top</frameName>
       </plugin>
    </sensor>

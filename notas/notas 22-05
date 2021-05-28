@@ -54,3 +54,14 @@ Algoritmo ICP
 Literal el primer resultado: http://www.dccia.ua.es/dccia/inf/asignaturas/Vision/vision-tema6.pdf
 Habla del algoritmo, y también de PCL
 más pcl + icp: https://programmerclick.com/article/7816164431/
+
+
+
+Más notas de lidar (no necesarias ya): 
+https://answers.ros.org/question/49983/trouble-viewing-lidar-data-in-rviz/
+https://www.youtube.com/watch?v=GvilxcePD64
+https://answers.ros.org/question/104026/can-i-transform-laserscan-messages/
+
+http://library.isr.ist.utl.pt/docs/roswiki/laser_pipeline(2f)Tutorials(2f)IntroductionToWorkingWithLaserScannerData.html
+
+http://wiki.ros.org/tf2/Tutorials

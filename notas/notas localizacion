@@ -11,8 +11,8 @@ http://www.open3d.org/docs/latest/tutorial/Basic/icp_registration.html
 
 documentation para open3d: http://www.open3d.org/docs/release/index.html
 
-Solución con plc:
-primero debemos pasar de poincloud2 a plc.poincloud:
+Solución con pcl:
+primero debemos pasar de poincloud2 a pcl.poincloud:
 https://stackoverflow.com/questions/39772424/how-to-effeciently-convert-ros-pointcloud2-to-pcl-point-cloud-and-visualize-it-i
 Una vez tenemos eso, debemos aplicar ICP: POR INVESTIGAR
 

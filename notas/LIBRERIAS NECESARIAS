@@ -1,5 +1,11 @@
-python_pcl
-ros_numpy
+python_pcl (descartado por el momento)
+
 numpy 
 threading
 rospy
+
+Para localización: 
+ros_numpy: "sudo apt install ros-kinetic-ros-numpy". Realiza conversiones entre numpy y pointcloud de ros
+open3d-ros-helper: Para python. Pone que requiere open3d 0.9.0. Realiza conversiones entre pointcloud de ros y de open3d, y más.
+https://pypi.org/project/open3d-ros-helper/
+open3d-python: Para python 
