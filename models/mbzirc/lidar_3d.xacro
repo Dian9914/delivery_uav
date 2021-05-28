@@ -99,8 +99,8 @@
       </noise>
       </ray>
       <!-- TO DO: probar que el plugin funcione-->
-      <!-- la libreria block laser es la que hace que funcione con pointcloud-->
-      <plugin name="gazebo_ros_block_laser_controller" filename="libgazebo_ros_block_laser.so">
+      <!-- la libreria velodyne laser es la que hace que funcione con pointcloud2-->
+      <plugin name="gazebo_ros_velodyne_laser_controller" filename="libgazebo_ros_velodyne_laser.so">
         <topicName>/del_uav/uav_laser_scan</topicName>
         <frameName>lidar_top</frameName>
       </plugin>

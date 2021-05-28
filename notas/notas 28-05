@@ -1,0 +1,3 @@
+Objetivo de hoy, trabajar con icp y demás
+Un cambio importante es usar el plugin de velodyne que publica pointcloud2, block_laser solo publica pointcloud:
+https://answers.gazebosim.org//question/23928/block-laser-plugin-for-pointcloud2/

@@ -171,6 +171,7 @@ catkin_install_python(PROGRAMS
   scripts/A_star.py
   scripts/gripper_node.py
   scripts/central_node.py
+  scripts/icp_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

@@ -17,3 +17,13 @@ https://stackoverflow.com/questions/39772424/how-to-effeciently-convert-ros-poin
 Una vez tenemos eso, debemos aplicar ICP: POR INVESTIGAR
 
 PARTE 2: ACTUALIZACION
+
+
+
+
+
+--- Trabajar con Open3D 0.9 ----
+Visualización de pointcloud (y más documentación): http://www.open3d.org/docs/0.9.0/tutorial/Basic/pointcloud.html
+Si hay errores al importar open3d: https://stackoverflow.com/questions/43070900/version-glibcxx-3-4-22-not-found
+¡CUIDADO! nuestro mensaje es un pointcloud y no un pointcloud2
+Para cambiarlo: https://answers.gazebosim.org//question/23928/block-laser-plugin-for-pointcloud2/
