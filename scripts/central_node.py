@@ -40,7 +40,7 @@ class user_interface_server():
         self.goto = service_client('/ual/go_to_waypoint',GoToWaypoint)
         self.land = service_client('/ual/land',Land)
         self.gripper = service_client('/del_uav/gripper_cmd',gripper_srv)
-        self.planner = service_client('/del_uav/planner',planner_srv)
+        #self.planner = service_client('/del_uav/planner',planner_srv)
 
 
     def subscriber_callback(self, data):

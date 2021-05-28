@@ -1,3 +1,13 @@
 Objetivo de hoy, trabajar con icp y demás
 Un cambio importante es usar el plugin de velodyne que publica pointcloud2, block_laser solo publica pointcloud:
 https://answers.gazebosim.org//question/23928/block-laser-plugin-for-pointcloud2/
+
+
+Probar: Captura y guardado de pointclouds, icp con puntos guardados 
+
+tf lo que hace es establecer la relacion entre 2 frames, cambiarla constantemente es lo que hace que algo se mueva
+Por lo tanto robot_state_publisher me hace de interfaz entre el estado de las articulaciones y las tf a hacer.
+Internamente tiene un modelo cinemático
+
+Para mover las medidas del lidar, habria que hacer un tf: http://wiki.ros.org/navigation/Tutorials/RobotSetup/TF
+Pero el eje del lidar quedaría flotando...?

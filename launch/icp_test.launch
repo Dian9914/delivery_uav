@@ -71,15 +71,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     </node>
 
     <!-- debug con RViz-->
-    <include file="$(find delivery_uav)/launch/visualize.launch">
+<!--     <include file="$(find delivery_uav)/launch/visualize.launch">
         <arg name="load_map" value="1"/>
         <arg name="map_name" value="lab2.yaml"/>
-    </include>
+    </include> -->
 
     <!-- iniciamos el nodo del gripper -->
     <node pkg="delivery_uav" type="gripper_node.py" name="gripper" output="screen" />
 
     <!-- iniciamos el nodo central -->
     <node pkg="delivery_uav" type="central_node.py" name="central" output="screen" />
+
+    <!-- iniciamos el nodo del ICP -->
+<!--     <node pkg="delivery_uav" type="icp_node.py" name="icp" output="screen" /> -->
 
 </launch>
