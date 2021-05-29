@@ -10,6 +10,8 @@ import copy
 
 class Loc:
     def __init__(self):
+        #self.pose_ini = True
+        self.punto = np.asarray([0.0,0.0,0.0,1.0])
         self.icp_init = False # Bandera para ICP en instante inicial
         self.T_init=np.asarray([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]) # asumimos que no se mueve inicialmente
         self.new_point=np.zeros((4,1))
@@ -30,12 +32,15 @@ class Loc:
         print("[ICP] Fin del init")
 
     def subscriber_callback(self, data):
-        self.pose = np.asarray([data.pose.position.x, data.pose.position.y, data.pose.position.z, 1])
+        #if self.pose_ini == True:
+        self.pose_real = np.asarray([data.pose.position.x, data.pose.position.y, data.pose.position.z, 1])
         self.orientation = np.asarray([data.pose.orientation.x, data.pose.orientation.y, data.pose.orientation.z])
 
-        #self.pose[0] = round(self.pose[0],3)
-        #self.pose[1] = round(self.pose[1],3)
-        #self.pose[2] = round(self.pose[2],3)
+        #self.pose_ini == False
+
+        #self.punto[0] = round(self.punto[0],3)
+        #self.punto[1] = round(self.punto[1],3)
+        #self.punto[2] = round(self.punto[2],3)
 
         #self.orientation[0] = round(self.orientation[0],1)
         #self.orientation[1] = round(self.orientation[1],1)
@@ -58,10 +63,11 @@ class Loc:
         #self.draw_registration_result()
 
         # calculo de punto
-        test = np.transpose(self.pose)
+        test = np.transpose(self.punto)
         self.new_point = np.matmul(self.T.transformation, test)
         print(self.new_point)
-        print(self.pose)
+        #print(self.punto)
+        print(self.pose_real)
 
         tolist = self.new_point.tolist()
         tolist.pop(3)
@@ -73,6 +79,7 @@ class Loc:
 
         self.pos_T_pub.publish(PoseMsg)
 
+        self.punto += self.new_point
         self.nube_ant = self.nube
 
     def draw_registration_result(self):

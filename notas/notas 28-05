@@ -17,3 +17,12 @@ ICP funciona mejor para ajustes pequeños.
 
 
 Creo que lo tengo, pero tengo que comprobar que las dimensiones de las operaciones son correctas, y hacer un log de los datos
+
+
+
+Lo que tengo que hacer:
+Partiendo de la posicion inicial, le voy multiplicando las T a la posicion anterior
+
+
+
+tfg de reconstruccion con icp: https://zaguan.unizar.es/record/10525/files/TAZ-PFC-2013-223.pdf
