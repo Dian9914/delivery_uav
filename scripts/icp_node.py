@@ -3,10 +3,12 @@
 import rospy
 from sensor_msgs.msg import PointCloud, PointCloud2
 from geometry_msgs.msg import Pose, PoseStamped
+from nav_msgs.msg import Odometry
 import open3d as o3d
 import numpy as np # numpy general
 from open3d_ros_helper import open3d_ros_helper as orh # open3d ros helper, funciones para facilitarnos la vida
 import copy
+import timeit
 
 class Loc:
     def __init__(self):
@@ -18,6 +20,9 @@ class Loc:
 
         # topic con la pose para hallar la inicial
         pose_subs = rospy.Subscriber("/ual/pose", PoseStamped, self.subscriber_callback)
+
+        # Para el GPS
+        gps_sub = rospy.Subscriber("/mavros/global_position/local", Odometry, self.gps_callback)
 
         # cuando recibimos la posicion, continuamos
         while self.initial_pose[0] == 0.0:
@@ -59,11 +64,17 @@ class Loc:
     def icp_process(self):
         # Parto de la nube en el instante actual (self.nube) y la nube en el instante anterior (self.nube_ant)
 
+        # estimacion de normal para PointToPlane
+        #self.nube_ant.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+        #self.nube.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+
         # --Inserta procedimientos de filtrado aqui--
-        threshold = 0.02
+        threshold = 0.1
         # ICP punto a punto (opcion por defecto) / Partimos de que el robot no se mueve de una posicion a la siguiente (opcion por defecto)
+        start = timeit.default_timer()
         self.T = o3d.registration.registration_icp(self.nube_ant, self.nube, threshold, self.T_init, o3d.registration.TransformationEstimationPointToPoint())
-        self.T_init = self.T.transformation
+        stop = timeit.default_timer()
+        #self.T_init = self.T.transformation
 
         # esto imprime info de la convergencia
         print(self.T)
@@ -74,6 +85,8 @@ class Loc:
 
         # calculo de punto, es T por el punto anterior, me da el nuevo
         self.punto = np.matmul(self.T.transformation, self.punto_ant)
+
+        print("Tiempo de calculo ICP: ", stop-start)
 
 
         #test = np.transpose(self.punto)
@@ -97,6 +110,9 @@ class Loc:
         self.punto_ant = self.punto
         self.nube_ant = self.nube
 
+        # integracion de medidas
+        #self.KalmanFilter()
+
     def draw_registration_result(self):
         source_temp = copy.deepcopy(self.nube_ant)
         target_temp = copy.deepcopy(self.nube)
@@ -116,6 +132,29 @@ class Loc:
             self.icp_process()
 
         self.icp_init = True
+
+
+
+    def gps_callback(self, data):
+        self.gps_pose = Pose()
+        self.gps_pose = data.pose.pose
+        gps_cov_mat = np.array(data.pose.covariance)
+        #self.gps_cov = np.delete(gps_cov_mat, np.s_([3:6]))
+        
+
+
+    def KalmanFilter(self):
+        # definicion de variables
+        # covarianza
+        r = 0.1
+        q_icp = 100
+        #q_gps = # tengo ya la matriz de covarianza
+
+        # construccion de matrices de covarianza
+        Q_gps = np.diag(self.gps_cov)
+
+        # Modelos del sistema
+        A=np.array([ []  ])
         
 
 
