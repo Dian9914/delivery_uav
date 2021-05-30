@@ -11,25 +11,23 @@ import copy
 import timeit
 
 class Loc:
-    def __init__(self):
-        rate = rospy.Rate(10)
-        self.initial_pose = np.asarray([0.0,0.0,0.0,1.0]) # punto inicial ()
+    def __init__(self, sim_origin):
+        self.rate = rospy.Rate(10) # deseamos funcionar a 10Hz siempre que sea posible
         self.icp_init = False # Bandera para ICP en instante inicial
         self.T_init=np.asarray([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]) # asumimos que no se mueve inicialmente
         self.punto=np.zeros((4,1))
 
-        # topic con la pose para hallar la inicial
-        pose_subs = rospy.Subscriber("/ual/pose", PoseStamped, self.subscriber_callback)
+        # inicializo la posicion segun el argumento dado
+        self.initial_pose = sim_origin
 
         # Para el GPS
-        gps_sub = rospy.Subscriber("/mavros/global_position/local", Odometry, self.gps_callback)
+        self.gps_sub = rospy.Subscriber("/mavros/global_position/local", Odometry, self.gps_callback)
 
-        # cuando recibimos la posicion, continuamos
-        while self.initial_pose[0] == 0.0:
-            rate.sleep()
+        # Para la odometria
+        self.odom_data_ant = np.asarray([self.initial_pose[0], self.initial_pose[1], self.initial_pose[2], 
+                                    0, 0, 0, 0])  #prov
 
-        # no necesitamos la pose inicial mas por lo que nos desuscribimos
-        pose_subs.unregister()
+        self.odom_sub = rospy.Subscriber("/ual/odom",Odometry, self.odom_callback)
 
         # publicador donde pondremos la posicion obtenida
         self.pos_T_pub = rospy.Publisher('/del_uav/ICP_position', Pose, queue_size=10)
@@ -39,27 +37,7 @@ class Loc:
         laser_sub = rospy.Subscriber('/del_uav/uav_laser_scan', PointCloud2, self.sub_callback)
         print("[ICP] Lidar topic detected. Waiting for first PointCloud capture.")
 
-        # tengo que hacer una captura inicial
-        # La captura se hace en el callback
-        while self.icp_init is False:
-            rate.sleep()
-        
-        # guardo nube y punto como la de los instantes anteriores
-        self.nube_ant = self.nube
-        self.punto_ant = self.initial_pose
         print("[ICP] Fin del init")
-
-    def subscriber_callback(self, data):
-        self.initial_pose = np.asarray([data.pose.position.x, data.pose.position.y, data.pose.position.z, 1])
-        self.orientation = np.asarray([data.pose.orientation.x, data.pose.orientation.y, data.pose.orientation.z])
-
-        #self.punto[0] = round(self.punto[0],3)
-        #self.punto[1] = round(self.punto[1],3)
-        #self.punto[2] = round(self.punto[2],3)
-
-        #self.orientation[0] = round(self.orientation[0],1)
-        #self.orientation[1] = round(self.orientation[1],1)
-        #self.orientation[2] = round(self.orientation[2],1)
 
     def icp_process(self):
         # Parto de la nube en el instante actual (self.nube) y la nube en el instante anterior (self.nube_ant)
@@ -133,7 +111,9 @@ class Loc:
 
         self.icp_init = True
 
-
+    def odom_callback(self, data):
+        self.odom_data = np.asarray([data.pose.pose.position.x, data.pose.pose.position.y, data.pose.pose.position.z, 
+                                    data.pose.pose.orientation.x, data.pose.pose.orientation.y, data.pose.pose.orientation.z, data.pose.pose.orientation.w])
 
     def gps_callback(self, data):
         self.gps_pose = Pose()
@@ -155,13 +135,35 @@ class Loc:
 
         # Modelos del sistema
         A=np.array([ []  ])
+
+    def ICP_location(self):
+        # tengo que hacer una captura inicial
+        # La captura se hace en el callback
+        # Espero a tener lectura
+        while self.icp_init is False:
+            self.rate.sleep()
+        
+        # guardo nube y punto como la de los instantes anteriores
+        self.nube_ant = self.nube
+        self.punto_ant = self.initial_pose
+
+        while not rospy.is_shutdown():
+            self.icp_process()
+            self.odom_data_ant=self.odom_data
+            self.rate.sleep()
         
 
 
 if __name__ == '__main__':
     try:
         rospy.init_node('icp_node', anonymous=True)
-        obj = Loc()
+        if rospy.has_param('~sim_origin'):
+            sim_origin = rospy.get_param('~sim_origin')
+            sim_origin.append(1.0)
+        else:
+            sim_origin = [0.0, 0.0, 0.0, 1.0]
+
+        obj = Loc(sim_origin)
 
         #obj.icp_process()
         
