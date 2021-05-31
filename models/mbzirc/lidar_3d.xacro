@@ -81,7 +81,7 @@
              <max_angle>3.1415</max_angle>
            </horizontal>
            <vertical>
-             <samples>20</samples>
+             <samples>20</samples> <!-- cambiar a 15-->
              <resolution>1</resolution>
              <min_angle>-0.53529248</min_angle>
              <max_angle>0.53529248</max_angle>
@@ -103,6 +103,9 @@
       <plugin name="gazebo_ros_velodyne_laser_controller" filename="libgazebo_ros_velodyne_laser.so">
         <topicName>/del_uav/uav_laser_scan</topicName>
         <frameName>lidar_top</frameName>
+        <min_range>0.59</min_range>
+        <max_range>30.0</max_range>
+        <gaussianNoise>0.01</gaussianNoise>
       </plugin>
    </sensor>
   </gazebo>
