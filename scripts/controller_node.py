@@ -68,11 +68,12 @@ class controller_server():
         return True
 
     def start_server(self):
+        rospy.init_node('controller_node')
         self.start_subscriber()
         self.x_ref = self.pose[0]
         self.y_ref = self.pose[1]
         self.z_ref = self.pose[2]
-        rospy.init_node('controller_node')
+        
         s = rospy.Service('/del_uav/goto', goto_srv, self.goto_handler)
         print("CONTROLLER NODE: Position control ready.")
         rospy.spin()

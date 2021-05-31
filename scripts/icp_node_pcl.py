@@ -10,13 +10,19 @@ import numpy as np # numpy general
 from open3d_ros_helper import open3d_ros_helper as orh # open3d ros helper, funciones para facilitarnos la vida
 import copy
 import timeit
+import pcl
+import ros_numpy
 
 class Loc:
     def __init__(self, sim_origin):
+        self.nube = pcl.PointCloud()
+        self.nube_ant = pcl.PointCloud()
+
         self.rate = rospy.Rate(5) # deseamos funcionar a 10Hz siempre que sea posible
         self.icp_init = False # Bandera para ICP en instante inicial
         self.T_init=np.asarray([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]) # asumimos que no se mueve inicialmente
         self.punto=np.asarray([0.0,0.0,0.0,1.0])
+        self.punto_dos=self.punto
 
         # inicializo la posicion segun el argumento dado
         self.initial_pose = sim_origin
@@ -55,32 +61,35 @@ class Loc:
         # ICP punto a punto (opcion por defecto) / Partimos de que el robot no se mueve de una posicion a la siguiente (opcion por defecto)
         start = timeit.default_timer()
 
-        print("Initial alignment")
+        #print("Initial alignment")
         #evaluation = o3d.registration.evaluate_registration(
         #    self.nube_ant, icp_nube, threshold, T_icp)
         #print(evaluation)
 
         #self.T = o3d.registration.registration_icp(self.nube_ant, icp_nube, threshold, T_icp, o3d.registration.TransformationEstimationPointToPoint())
-        self.T = orh.p2p_icp_registration(self.nube_ant, icp_nube, n_points=4000)
+        icp = self.nube_ant.make_IterativeClosestPoint()
+        converged, transf, estimate, fitness = icp.icp(self.nube_ant, icp_nube)
+        self.T = transf
         stop = timeit.default_timer()
         #self.T_init = self.T.transformation
 
         # esto imprime info de la convergencia
         print(self.T)
-        print("Transformation is:")
-        print(self.T[0].transformation) # la matriz de transformacion
+        #print("Transformation is:")
+        #print(self.T.transformation) # la matriz de transformacion
         print("")
         #self.draw_registration_result(nube_icp)
 
         # calculo de punto, es T por el punto anterior, me da el nuevo
-        self.punto = np.matmul(self.T[0].transformation, self.punto_ant)
+        self.punto = np.matmul(self.T, self.punto_ant)
 
         print("Tiempo de calculo ICP: ", stop-start)
-
-
+        
+        self.punto_dos += self.T[:,3]
         #test = np.transpose(self.punto)
         #self.new_point = np.matmul(self.T.transformation, test)
         print(self.punto) # imprimo el punto que me sale
+        print(self.punto_dos)
         #print(self.punto)
         #print(self.pose_real)
 
@@ -111,11 +120,12 @@ class Loc:
         o3d.visualization.draw_geometries([source_temp, target_temp])
 
     def sub_callback(self, data):
-        self.nube = orh.rospc_to_o3dpc(data)
-        # print(self.nube) # que hace este print?
-        # print(np.asarray(self.nube.points)) # y que hace este print?
-        # o3d.visualization.draw_geometries([self.nube]) # visualizar pointcloud
-        # o3d.io.write_point_cloud("test_point_cloud.pcd", self.nube)
+        pc = ros_numpy.numpify(data)
+        points=np.zeros((pc.shape[0],3))
+        points[:,0]=pc['x']
+        points[:,1]=pc['y']
+        points[:,2]=pc['z']
+        self.nube = pcl.PointCloud(np.array(points, dtype=np.float32))
 
         self.icp_init = True
 
