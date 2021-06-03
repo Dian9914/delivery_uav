@@ -36,15 +36,18 @@ class Loc_KF:
         self.alt_value = 0.0
         self.alt_sub = rospy.Subscriber("/mavros/altitude", Altitude, self.alt_callback)
 
+        print("[KF] Sub topics OK")
 
         # Topics we need to publish to
-
 
 
         # Wait for initial measurements
         local_rate = rospy.Rate(30)
         while (self.odom_ok is False and self.gps_ok is False and self.alt_ok is False):
+            print("Estoy en bucle")
             local_rate.sleep()
+            
+        print("[KF] Measurements obtained")
 
         self.initial_pose = sim_origin
         #self.odom_data_ant = np.asarray([self.initial_pose[0], self.initial_pose[1], self.initial_pose[2], 
@@ -53,22 +56,30 @@ class Loc_KF:
         # KF variables
         # Vector de estados mu = X,Y,Z,vx,vy,vz, con z las del altimetro
         self.mu = sim_origin
-        self.mu = self.mu.append([0.0,0.0,0.0])    
+        np.append(self.mu, [0.0,0.0,0.0])    
         self.mu_p = self.mu 
 
         # sigma, Q_gps -> given by odom & sensors
-        self.sigma = np.zeros(6,6)
+        self.sigma = np.zeros([6,6])
         self.sigma_p = self.sigma
 
         # Q for altimeter
         q_alt = 5
+        q_gps = 1
+        r = 0.5
 
         # Q for measurements
-        self.Q = np.diag([self.odom_cov_pos, self.odom_cov_vel])
-        self.Q[3,3] = q_alt
+        #self.Q = np.diag(np.append(self.gps_cov_pos, self.gps_cov_vel)) # obtained GPS covariance
+        self.Q = np.diag(q_gps*np.ones(6)) # our GPS covariance
+        self.Q[2,2] = q_alt
 
         # Observation model
         self.C = np.eye(6)
+
+
+        # extra for model covariance
+        self.A = np.eye(6)
+        self.R = np.diag(r*np.ones(6))
 
         # publicador donde pondremos la posicion obtenida
         #self.pos_T_pub = rospy.Publisher('/del_uav/ICP_position', Pose, queue_size=10)
@@ -83,15 +94,16 @@ class Loc_KF:
     def KF_pred(self):
         # La mu predicha es la de la odometria, que tiene deriva que vamos a corregir
         self.mu_p = self.odom_data
-        self.sigma_p = np.diag([self.odom_cov_pos, self.odom_cov_vel])
+        #self.sigma_p = np.diag(np.append(self.odom_cov_pos, self.odom_cov_vel))
+        self.sigma_p = np.linalg.multi_dot([self.A, self.sigma, np.transpose(self.A)]) + self.R # our covariance
 
     def KF_act(self):
         # Kt=sigma_p*C'*(C*sigma_p*C'+Q)^-1;
         #temp = np.matmul(self.C, np.matmul(self.sigma, np.transpose(self.C))) + self.Q
-        temp = np.linalg.multi_dot(self.C, self.sigma_p, np.transpose(self.C)) + self.Q
+        temp = np.linalg.multi_dot([self.C, self.sigma_p, np.transpose(self.C)]) + self.Q
         #self.Kt = np.matmul(np.matmul(self.sigma_p, np.transpose(self.C)), np.linalg.inv(temp))
 
-        self.Kt = np.linalg.multi_dot(self.sigma_p, np.transpose(self.C), np.linalg.inv(temp))
+        self.Kt = np.linalg.multi_dot([self.sigma_p, np.transpose(self.C), np.linalg.inv(temp)])
 
         #mu = mu_p + Kt*([Z(i,:) Z(i-1,:)]'-C*mu_p);
         #sigma = (eye(4)-Kt*C)*sigma_p; % cambia el eye aqui tambien
@@ -107,17 +119,25 @@ class Loc_KF:
     def odom_callback(self, data):
         self.odom_data = np.asarray([data.pose.pose.position.x, data.pose.pose.position.y, data.pose.pose.position.z, 
                                      data.twist.twist.linear.x, data.twist.twist.linear.y, data.twist.twist.linear.z])
-        self.odom_cov_pos = np.asarray([data.pose.covariance[4,4], data.pose.covariance[5,5], data.pose.covariance[6,6]])
-        self.odom_cov_vel = np.asarray([data.twist.covariance[4,4], data.twist.covariance[5,5], data.twist.covariance[6,6]])
+        # Alternativa: Hacer reshape
+        self.odom_cov_pos = np.asarray([data.pose.covariance[21], data.pose.covariance[28], data.pose.covariance[35]])
+        self.odom_cov_vel = np.asarray([data.twist.covariance[21], data.twist.covariance[28], data.twist.covariance[35]])
+        #print(self.odom_cov_pos)
+        #print(self.odom_cov_vel)
+        self.odom_ok = True
 
     def gps_callback(self, data):
         self.gps_pose = data.pose.pose
         self.gps_twist = data.twist.twist
-        gps_cov_mat = np.array(data.pose.covariance)
-        #self.gps_cov = np.delete(gps_cov_mat, np.s_([3:6]))
+        self.gps_cov_pos = np.asarray([data.pose.covariance[21], data.pose.covariance[28], data.pose.covariance[35]])
+        self.gps_cov_vel = np.asarray([data.twist.covariance[21], data.twist.covariance[28], data.twist.covariance[35]])
+        #print(self.gps_cov_pos)
+        #print(self.gps_cov_vel)
+        self.gps_ok = True
 
     def alt_callback(self, data):
         self.alt_value = data.local
+        self.alt_ok = True
         
     def T_from_odom(self, odom):
         T_trans=np.asarray([[1.0,0.0,0.0,odom[0]-self.odom_data_ant[0]],
@@ -126,24 +146,6 @@ class Loc_KF:
                             [0.0,0.0,0.0,1.0]])
 
         return T_trans
-
-    def ICP_location(self):
-        # tengo que hacer una captura inicial
-        # La captura se hace en el callback
-        # Espero a tener lectura
-        while self.icp_init is False:
-            self.rate.sleep()
-        
-        # guardo nube y punto como la de los instantes anteriores
-        self.nube_ant = self.nube
-        self.punto_ant = self.initial_pose
-
-        while not rospy.is_shutdown():
-            odom = self.odom_data
-            T_icp = self.T_from_odom(odom)
-            self.icp_process(self.nube, T_icp)
-            self.odom_data_ant=self.odom_data
-            self.rate.sleep()
         
 
 
@@ -152,7 +154,7 @@ if __name__ == '__main__':
         rospy.init_node('KF_node', anonymous=True)
 
 
-        obj = Loc_KF(sim_origin)
+        obj = Loc_KF()
 
         rate = rospy.Rate(30) # 30 Hz es la frecuencia de UAL
 
@@ -165,6 +167,6 @@ if __name__ == '__main__':
         #obj.ICP_location()
         
 
-        rospy.spin()
+        #rospy.spin()
     except rospy.ROSInterruptException:
         pass
