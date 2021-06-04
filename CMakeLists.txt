@@ -56,6 +56,7 @@ add_message_files(
   user_msg.msg
   waypoint.msg
   planner_route.msg
+  sigma_value.msg
 )
 
 ## Generate services in the 'srv' folder

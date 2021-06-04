@@ -2,10 +2,11 @@
 
 import rospy
 from sensor_msgs.msg import PointCloud, PointCloud2
-from geometry_msgs.msg import Pose, PoseStamped, Twist
+from geometry_msgs.msg import Pose, PoseStamped, Twist, Point, Vector3
 from nav_msgs.msg import Odometry
 from mavros_msgs.msg import Altitude
 from delivery_uav.srv import goto_srv
+from delivery_uav.msg import sigma_value
 import open3d as o3d
 import numpy as np # numpy general
 from open3d_ros_helper import open3d_ros_helper as orh # open3d ros helper, funciones para facilitarnos la vida
@@ -39,7 +40,12 @@ class Loc_KF:
         print("[KF] Sub topics OK")
 
         # Topics we need to publish to
-
+        self.mu_pos_pub = rospy.Publisher("/del_uav/KF_pose", Point, queue_size=50)
+        self.mu_vel_pub = rospy.Publisher("/del_uav/KF_twist", Vector3, queue_size=50)
+        self.sigma_pub = rospy.Publisher("/del_uav/KF_sigma", sigma_value, queue_size=50)
+        self.mu_pos_pub_obj = Point()
+        self.mu_vel_pub_obj = Vector3()
+        self.sigma_obj = sigma_value()
 
         # Wait for initial measurements
         local_rate = rospy.Rate(30)
@@ -111,8 +117,35 @@ class Loc_KF:
         self.mu = self.mu_p + np.matmul(self.Kt, (self.Z - np.matmul(self.C,self.mu_p)))
         self.sigma = np.matmul(np.eye(6) - np.matmul(self.Kt, self.C), self.sigma_p)  
 
+        # Print for debugging
+        print("Mu estimada")
         print(self.mu)
         print("")     
+
+        print("Datos odometria")
+        print(self.odom_data)
+
+        print("Kt del filtro")
+        print(self.Kt)
+
+        # Result publishing
+        self.mu_pos_pub_obj.x = self.mu[0]
+        self.mu_pos_pub_obj.y = self.mu[1]
+        self.mu_pos_pub_obj.z = self.mu[2]
+        self.sigma_obj.pos_cov.x = self.sigma[0,0]
+        self.sigma_obj.pos_cov.y = self.sigma[1,1]
+        self.sigma_obj.pos_cov.z = self.sigma[2,2]
+
+        self.mu_vel_pub_obj.x = self.mu[3]
+        self.mu_vel_pub_obj.y = self.mu[4]
+        self.mu_vel_pub_obj.z = self.mu[5]
+        self.sigma_obj.vel_cov.x = self.sigma[3,3]
+        self.sigma_obj.vel_cov.y = self.sigma[4,4]
+        self.sigma_obj.vel_cov.z = self.sigma[5,5]
+
+        self.mu_pos_pub.publish(self.mu_pos_pub_obj)
+        self.mu_vel_pub.publish(self.mu_vel_pub_obj)
+        self.sigma_pub.publish(self.sigma_obj)
         
 
 
