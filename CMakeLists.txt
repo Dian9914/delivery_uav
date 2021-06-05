@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   gazebo_ros
   message_generation
   geometry_msgs
+  uav_abstraction_layer
 )
 
 ## System dependencies are found with CMake's conventions
@@ -79,7 +80,7 @@ add_message_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  geometry_msgs std_msgs
+  geometry_msgs std_msgs uav_abstraction_layer
 )
 
 ################################################
@@ -114,7 +115,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES delivery_uav
- CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime 
+ CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime uav_abstraction_layer
 #  DEPENDS system_lib
 )
 
@@ -173,6 +174,7 @@ catkin_install_python(PROGRAMS
   scripts/gripper_node.py
   scripts/central_node.py
   scripts/icp_node.py
+  scripts/controller_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-from delivery_uav.srv import gripper_srv, user_interface, planner_srv
+from delivery_uav.srv import gripper_srv, user_interface, planner_srv, goto_srv
 from delivery_uav.msg import gripper_state, waypoint, planner_route
 from uav_abstraction_layer.srv import GoToWaypoint, Land, TakeOff
+from uav_abstraction_layer.msg import State
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped
 
@@ -29,6 +30,8 @@ class user_interface_server():
         self.ready = False       #Variable que representa si el UAV esta en condicion de recibir ordenes
         self.started = False     #Variable que representa si el sistema esta inicializado y el UAV despegado
         self.charge = True       #Variable que representa si la carga esta a bordo
+        self.ual_state = 0   #Bandera que informa del estado de ual y de si es posible despegar o controlar
+        # 0: ual no esta listo, 1: se puede lanzar start, 2: se puede controlar
 
         # sistema para evitar que el uav reciba instrucciones contradictorias
         self.travel = False        #Variable que representa si el UAV ya esta dirigiendose a un punto
@@ -37,10 +40,28 @@ class user_interface_server():
 
         # inicializacion de los clientes para los distintos servicios a usar
         self.takeoff = service_client('/ual/take_off',TakeOff)
-        self.goto = service_client('/ual/go_to_waypoint',GoToWaypoint)
+        #CUIDADO; DESCOMENTAR TAMBIEN EN AUTO_MODE LINEA 215 aprox
+        #self.goto = service_client('/ual/go_to_waypoint',GoToWaypoint)
+        self.goto = service_client('/del_uav/goto',goto_srv)
         self.land = service_client('/ual/land',Land)
         self.gripper = service_client('/del_uav/gripper_cmd',gripper_srv)
         #self.planner = service_client('/del_uav/planner',planner_srv)
+
+    def ual_state_checker(self,data):
+        # al leer el estado, comprobamos que el estado sea landed armed para poder hacer start
+        # o flying auto para poder controlar
+        if data.state==2 and self.ual_state==0:
+            self.ual_state=1
+            print("CENTRAL NODE: UAL ready for take off.")
+        elif data.state==5 and self.ual_state==1:
+            self.ual_state=0
+            print("CENTRAL NODE: UAL is not ready for take off.")
+        elif data.state==4 and self.ual_state==1:
+            self.ual_state=2
+            print("CENTRAL NODE: UAL is ready for taking waypoints.")
+        elif data.state!=4 and self.ual_state==2:
+            self.ual_state=0
+            print("CENTRAL NODE: UAL has either started landing or failed.")
 
 
     def subscriber_callback(self, data):
@@ -54,9 +75,16 @@ class user_interface_server():
         try:
             # IMPORTANTE:
             # CAMBIAR POR EL TOPIC CORRESPONDIENTE CUANDO EL LOCALIZADOR ESTE IMPLEMENTADO
-            pose_subs=rospy.Subscriber("/ual/pose", PoseStamped, self.subscriber_callback)
+            self.pose_subs=rospy.Subscriber("/ual/pose", PoseStamped, self.subscriber_callback)
         except:
-            print('SUBSCRIBER HANDLER [CN]: Unexpected error.')
+            print('SUBSCRIBER HANDLER [CN]: Unexpected error subscribing to pose topic.')
+            return False
+
+        try:
+            # iniciamos el subscriber que se preocupa de observar el estado de UAL
+            self.ual_state_sub = rospy.Subscriber('/ual/state', State, self.ual_state_checker)
+        except:
+            print('SUBSCRIBER HANDLER [CN]: Unexpected error subscribing to ual/state.')
             return False
 
         return True
@@ -84,6 +112,32 @@ class user_interface_server():
         request.height = 3.0              # En una primera aproximacion al problema, asumiremos que siempre es seguro elevarse 3m
         # mas adelante, se llamara al planner para preguntarle cual es la altura segura para elevarse
 
+         # debemos esperar a que UAL este listo para despegar. Para ello, usaremos rospy.sleep
+        wait = rospy.Rate(2) # vamos a esperar la condicion con una frecuencia de 2Hz, es decir, que el proceso estara
+        # bloqueado durante 0.5 segundos aproximadamente antes de comprobar el estado de UAL
+        # Para controlar no estar demasiado tiempo esperando, usamos un contador
+        t = 0
+        bandera_state = False #bandera para evitar falsos positivos
+        while not (self.ual_state == 1 and bandera_state): 
+            t=t+1
+            if self.ual_state == 1:
+                bandera_state = True
+            else:
+                bandera_state = False
+            if t > 100:
+                print('START SERVICE [CN]: UAL is taking more time than espected...')
+                entrada = raw_input('START SERVICE [CN]: Do you want to keep trying? [S/n] ->')
+                if entrada == 'n':    # Si la respuesta es no, el sistema abortara el inicio y devolvera False
+                    print('START SERVICE [CN]: Aborting takeoff. System start aborted')
+                    self.mtx_ready.release()
+                    return False
+                else:
+                    print('START SERVICE [CN]: Central node will keep waiting.')
+                    t=0
+                    continue
+
+            wait.sleep()
+
         # llamo al servicio takeoff
         response = self.takeoff.single_response(request)
 
@@ -107,7 +161,8 @@ class user_interface_server():
         # debemos esperar a haber llegado al punto para hacer la siguiente llamada. Para ello, usaremos rospy.sleep
         wait = rospy.Rate(2) # vamos a esperar la condicion con una frecuencia de 2Hz, es decir, que el proceso estara
         # bloqueado durante 0.5 segundos aproximadamente antes de comprobar que hemos llegado al punto
-        while not (self.pose[2] == request.height): #mientras no hayamos llegado a la altura deseada
+        while not (self.ual_state == 2): 
+            #mientras no hayamos llegado a la altura deseada y el estado de UAL no sea flying auto
             wait.sleep()
         # Registramos la posicion UNA VEZ ESTAMOS VOLANDO como punto home
         # Esto es importante porque al planificador nunca debemos darle como objetivo un punto en el suelo
@@ -122,12 +177,15 @@ class user_interface_server():
         #MODO AUTOMATICO: Principal modo de funcionamiento, el UAV se desplaza a un punto dado
         print("AUTO MODE [CN]: Starting the auto mode. The goal set is [%d, %d, %d]."%(goal[0],goal[1],goal[2]))
 
+        '''
+        #SOLO DESCOMENTAR SI EL SERVICO DEL PLANNER FUNCIONA Y HAS DESCOMENTADO ARRIBA SU HANDLER
         # PRIMERO LLAMARIAMOS AL SERVICIO DEL PLANNER QUE NOS SUMINISTRE LA TRAYECTORIA
         request = planner_srv._request_class()
 
         request.start.xyz=[self.pose[0],self.pose[1],self.pose[2]]
         request.goal.xyz=[goal[0],goal[1],goal[2]]
 
+        
         response = self.planner.single_response(request)
         if not response:
             print('AUTO MODE [CN]: Error with Planner service. Aborting travel')
@@ -135,10 +193,10 @@ class user_interface_server():
         else:
             print('AUTO MODE [CN]: Succesfull Planner service call.')
 
-        self.trayectory = response
+        self.trayectory = response'''
         # IMPORTANTE:
         # COMO NO DISPONEMOS DE PLANNER, SUMINISTRAMOS UNA TRAYECTORIA INVENTADA
-        #self.trayectory = [[-1,-1,3],[-2,-2,3],[-2,-2,4],[-3,-3,4],[-4,-4,4],[-3,-3,4],[-2,-2,4],[-2,-2,3],[-1,-1,3],[0,0,3]]
+        self.trayectory = [[-1,-1,3],[-2,-2,3],[-2,-2,4],[-3,-3,4],[-4,-4,4],[-3,-3,4],[-2,-2,4],[-2,-2,3],[-1,-1,3],[0,0,3]]
 
         # En este caso vamos a llamar al mismo servicio de forma recurrente, por lo que es interesante usar una conexion persistente con el servicio
         # Por tanto, inicializaremos la conexion antes de entrar al bucle
@@ -152,7 +210,9 @@ class user_interface_server():
             print('AUTO MODE [CN]: Started persistent GoToWaypoint service.')
 
         # Ademas, generamos el mensaje que pasaremos al servicio ya que el tipo de este no va a cambiar durante la ejecucion
-        request = GoToWaypoint._request_class()
+        # CUIDADO AL CAMBIAR DE SERVICIO
+        # request = GoToWaypoint._request_class()
+        request = goto_srv._request_class()
 
         # comienza el bucle de viaje
         for waypoint in self.trayectory:
@@ -167,9 +227,9 @@ class user_interface_server():
                 break
             self.mtx_travel.release()
             # actualizamos los valores de request para el siguiente waypoint
-            request.waypoint.pose.position.x = waypoint[0]
-            request.waypoint.pose.position.y = waypoint[1]
-            request.waypoint.pose.position.z = waypoint[2]
+            request.pose.position.x = waypoint[0]
+            request.pose.position.y = waypoint[1]
+            request.pose.position.z = waypoint[2]
 
             #llamamos al servicio para comenzar el movimiento
             response = self.goto.persistent_response(request)
@@ -252,6 +312,10 @@ class user_interface_server():
         if not response:
             print('DROP SERVICE [CN]: Error with gripper. Cannot open the gripper.')
             return False
+
+        #espera un segundo para que el gripper abra
+        duerme=rospy.rate(1)
+        duerme.sleep()
 
         # Creo el request que se enviara al servicio. Deja el gripper en estado neutro.
         request = gripper_state()
