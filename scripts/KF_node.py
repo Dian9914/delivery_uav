@@ -73,11 +73,17 @@ class Loc_KF:
         q_alt = 5
         q_gps = 1
         r = 0.5
+        speed_cov_adj = 10
 
         # Q for measurements
         #self.Q = np.diag(np.append(self.gps_cov_pos, self.gps_cov_vel)) # obtained GPS covariance
         self.Q = np.diag(q_gps*np.ones(6)) # our GPS covariance
         self.Q[2,2] = q_alt
+
+        # Speed covariance for GPS is higher
+        self.Q[3,3] = speed_cov_adj*self.Q[3,3]
+        self.Q[4,4] = speed_cov_adj*self.Q[4,4]
+        self.Q[5,5] = speed_cov_adj*self.Q[5,5]
 
         # Observation model
         self.C = np.eye(6)
@@ -125,8 +131,8 @@ class Loc_KF:
         print("Datos odometria")
         print(self.odom_data)
 
-        print("Kt del filtro")
-        print(self.Kt)
+        print("Sigma estimada")
+        print(self.sigma)
 
         # Result publishing
         self.mu_pos_pub_obj.x = self.mu[0]
