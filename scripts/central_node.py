@@ -227,9 +227,9 @@ class user_interface_server():
                 break
             self.mtx_travel.release()
             # actualizamos los valores de request para el siguiente waypoint
-            request.pose.position.x = waypoint[0]
-            request.pose.position.y = waypoint[1]
-            request.pose.position.z = waypoint[2]
+            request.waypoint.pose.position.x = waypoint[0]
+            request.waypoint.pose.position.y = waypoint[1]
+            request.waypoint.pose.position.z = waypoint[2]
 
             #llamamos al servicio para comenzar el movimiento
             response = self.goto.persistent_response(request)
