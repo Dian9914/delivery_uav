@@ -1,0 +1,14 @@
+probamos a utilizar el paquete rtabmap ROS
+instalandolo, necesitamos las dependencias:
+- find object 2d
+- rtabmap
+- probablemente los referentes a pcl, aunque ya estaban instalados en este portatil
+
+utilizaremos el nodo ICP odometry, que presumiblemente nos deberia dar una odometria usando solo lidar
+en el tutorial del paquete lo usan para 2d, por lo que podemos esperar que no estime muy bien en Z
+
+haciendo pruebas, hemos descubierto que:
+    point to plane funciona mucho mejor
+    el frame_id debe ser el del lidar
+    normal_k y normal_radius sirven como parametrosz para point2plane, uno de ellos siempre ha de ser 0, hay que hacer pruebas
+    Z efectivamente se estima fatal. Esperable.
