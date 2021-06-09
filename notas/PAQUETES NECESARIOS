@@ -3,3 +3,8 @@ velodyne: mirar instrucciones especificas
 joint state publisher: sudo apt install ros-kinetic-joint-state-publisher-gui
 
 UAL: mirar readme
+
+
+- find object 2d
+- rtabmap y rtabmap_ros
+- probablemente los referentes a pcl, aunque ya estaban instalados en este portatil

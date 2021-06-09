@@ -1,7 +1,7 @@
 probamos a utilizar el paquete rtabmap ROS
 instalandolo, necesitamos las dependencias:
 - find object 2d
-- rtabmap
+- rtabmap y rtabmap_ros: "sudo apt install ros-kinetic-rtabmap-ros" (instala dependencias tambien, como find-object-2d)
 - probablemente los referentes a pcl, aunque ya estaban instalados en este portatil
 
 utilizaremos el nodo ICP odometry, que presumiblemente nos deberia dar una odometria usando solo lidar
