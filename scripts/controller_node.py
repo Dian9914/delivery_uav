@@ -25,6 +25,11 @@ class controller_server():
         self.y_accumErr = 0;
         self.z_accumErr = 0;
 
+        # bouncing factor
+        self.x_bf = 1;
+        self.y_bf = 1;
+        self.z_bf = 1;
+
         self.controller_state=False #bandera que marca si el control debe o no actuar
 
 
@@ -45,23 +50,23 @@ class controller_server():
 
         # SEGUNDA APROXIMACIoN, CONTROL PID
         # Parametros de control, hay que ajustar:
-        Kp_x= 0.7
-        Kp_y= 0.7
+        Kp_x= 0.5
+        Kp_y= 0.5
         Kp_z= 0.7
 
-        Ki_x= 0.1
-        Ki_y= 0.1
+        Ki_x= 0.2
+        Ki_y= 0.2
         Ki_z= 0.05
 
-        Kd_x= 0.1
-        Kd_y= 0.1
+        Kd_x= 0.05
+        Kd_y= 0.05
         Kd_z= 0.05
 
         windup_max=3.0
         windup_min=-3.0
 
-        sat_max=2.0
-        sat_min=-2.0
+        sat_max=3.0
+        sat_min=-3.0
 
         # Calculo el error acummulado
         self.x_accumErr += x_err*dt;
@@ -109,6 +114,18 @@ class controller_server():
         self.x_err_ant = x_err;
         self.y_err_ant = y_err;
         self.z_err_ant = z_err;
+
+        # aplicamos el bouncing factor si aplica
+        x_vel=x_vel*self.x_bf
+        y_vel=y_vel*self.y_bf
+        z_vel=z_vel*self.z_bf
+
+        if self.x_bf<1:
+            self.x_bf = self.x_bf*2;
+        if self.y_bf<1:
+            self.y_bf = self.y_bf*2;
+        if self.z_bf<1:
+            self.z_bf = self.z_bf*2;
 
         # PUBLICO LA ACCION DE CONTROL
         
@@ -170,6 +187,13 @@ class controller_server():
 
     def goto_handler(self, req):
         if req.waypoint.pose.position.x<=50 and req.waypoint.pose.position.y<=50 and req.waypoint.pose.position.z>=0:
+            #cuando cambia la referencia, cambia el bouncing factor
+            if self.x_ref!=req.waypoint.pose.position.x:
+                self.x_bf=0.1
+            if self.y_ref!=req.waypoint.pose.position.y:
+                self.y_bf=0.1
+            if self.z_ref!=req.waypoint.pose.position.z:
+                self.z_bf=0.1
             self.x_ref=req.waypoint.pose.position.x
             self.y_ref=req.waypoint.pose.position.y
             self.z_ref=req.waypoint.pose.position.z

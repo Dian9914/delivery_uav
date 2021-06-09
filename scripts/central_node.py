@@ -66,9 +66,9 @@ class user_interface_server():
 
     def subscriber_callback(self, data):
         self.pose = [data.pose.position.x, data.pose.position.y, data.pose.position.z]
-        self.pose[0] = round(self.pose[0])
-        self.pose[1] = round(self.pose[1])
-        self.pose[2] = round(self.pose[2])
+        self.pose[0] = round(self.pose[0],1)
+        self.pose[1] = round(self.pose[1],1)
+        self.pose[2] = round(self.pose[2],1)
 
     def start_subscriber(self):
         # inicializacion de los topic subscribers. En principio solo nos suscribimos al topic de posicion
@@ -145,8 +145,8 @@ class user_interface_server():
         # Mientras que la respuesta sea un error, el sistema seguira preguntando al usuario si quiere reintentar el inicio
         while not response:     
             print('START SERVICE [CN]: Error with takeoff.')
-            entrada = raw_input('START SERVICE [CN]: Try again? [S/n] ->')     #existe en python2 para obtener texto por teclado
-            if entrada == 'S':    # Si la respuesta es si, el sistema esperara a que el servicio este de nuevo disponible y lo llamara
+            entrada = raw_input('START SERVICE [CN]: Try again? [S/n] -> ')     #existe en python2 para obtener texto por teclado
+            if entrada == 'S':    # Si la respuesta es si, el sistema esp erara a que el servicio este de nuevo disponible y lo llamara
                 self.takeoff.is_avalible()
                 response = self.takeoff.single_response(request)
             elif entrada == 'n':    # Si la respuesta es no, el sistema abortara el inicio y devolvera False
@@ -196,7 +196,7 @@ class user_interface_server():
         self.trayectory = response'''
         # IMPORTANTE:
         # COMO NO DISPONEMOS DE PLANNER, SUMINISTRAMOS UNA TRAYECTORIA INVENTADA
-        self.trayectory = [[-1,-1,3],[-2,-2,3],[-2,-2,4],[-3,-3,4],[-4,-4,4],[-3,-3,4],[-2,-2,4],[-2,-2,3],[-1,-1,3],[0,0,3]]
+        self.trayectory = [[-1,-1,3],[-2,-2,3],[-2,-2,4],[-3,-3,4],[-4,-4,4],[-3,-3,4],[-2,-2,4],[-2,-2,3],[-2,-3,3]]
 
         # En este caso vamos a llamar al mismo servicio de forma recurrente, por lo que es interesante usar una conexion persistente con el servicio
         # Por tanto, inicializaremos la conexion antes de entrar al bucle
@@ -235,7 +235,7 @@ class user_interface_server():
             response = self.goto.persistent_response(request)
             while not response:     
                 print('AUTO MODE [CN]: Error with GoToWaypoint.')
-                entrada = raw_input('AUTO MODE [CN]: Try again? [S/n] ->')     #existe en python2 para obtener texto por teclado
+                entrada = raw_input('AUTO MODE [CN]: Try again? [S/n] -> ')     #existe en python2 para obtener texto por teclado
                 if entrada == 'S':    # Si la respuesta es si, reiniciamos la conexion y reintentamos
                     self.goto.persistent_close()
                     self.goto.persistent_init()
@@ -249,9 +249,9 @@ class user_interface_server():
                     print('AUTO MODE [CN]: Unrecognised input.')
                     continue
             # debemos esperar a haber llegado al punto para hacer la siguiente llamada. Para ello, usaremos rospy.sleep
-            wait = rospy.Rate(2) # vamos a esperar la condicion con una frecuencia de 2Hz, es decir, que el proceso estara
-            # bloqueado durante 0.5 segundos aproximadamente antes de comprobar que hemos llegado al punto
-            while not (self.pose[0] == waypoint[0] and self.pose[1] == waypoint[1] and self.pose[2] == waypoint[2]):
+            wait = rospy.Rate(5) # vamos a esperar la condicion con una frecuencia de 2Hz, es decir, que el proceso estara
+            # bloqueado durante 0.2 segundos aproximadamente antes de comprobar que hemos llegado al punto
+            while not (abs(self.pose[0] - waypoint[0])<0.5 and abs(self.pose[1] - waypoint[1])<0.5 and abs(self.pose[2] - waypoint[2])<0.5):
                 wait.sleep()
 
             # Una vez hemos hecho la orden, abrimos el mutex para permitir que otros hilos den ordenes al UAV
@@ -259,14 +259,22 @@ class user_interface_server():
 
             # Comprobamos el resultado de nuestra llamada a servicio.
             print('AUTO MODE [CN]: Succesfully reached waypoint [%d, %d, %d].'%(waypoint[0],waypoint[1],waypoint[2]))
-            print('DEBUG AUTO MODE [CN]: Current position is [%d, %d, %d].'%(self.pose[0],self.pose[1],self.pose[2]))
+            #print('DEBUG AUTO MODE [CN]: Current position is [%f, %f, %f].'%(self.pose[0],self.pose[1],self.pose[2]))
 
-        # Comprobamos que hayamos llegado al destino
-        if self.pose[0] == goal[0] and self.pose[1] == goal[1] and self.pose[2] == goal[2]:
+        # Esperamos a llegar al destino y estabilizarnos, las tolerancias aqui son mas finas
+        t=0
+        while not (abs(self.pose[0] - waypoint[0])<0.3 and abs(self.pose[1] - waypoint[1])<0.3 and abs(self.pose[2] - waypoint[2])<0.5) and t<10:
+            if abs(self.pose[0] - goal[0])<0.3 and abs(self.pose[1] - goal[1])<0.3 and abs(self.pose[2] - goal[2])<0.5:
+                t=t+1
+            else:
+                t=0
+            wait.sleep()
+        
+        if abs(self.pose[0] - goal[0])<0.3 and abs(self.pose[1] - goal[1])<0.3 and abs(self.pose[2] - goal[2])<0.5:
             print('AUTO MODE [CN]: Succesfully reached goal [%d, %d, %d].'%(goal[0],goal[1],goal[2]))
             result = True
         else:
-            print('AUTO MODE [CN]: Could not reach goal. Instead, arrived at [%d, %d, %d].'%(self.pose[0],self.pose[1],self.pose[2]))
+            print('AUTO MODE [CN]: Could not reach goal. Instead, arrived at [%f, %f, %f].'%(self.pose[0],self.pose[1],self.pose[2]))
             result = False
             
         # Cerramos la conexion

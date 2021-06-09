@@ -80,9 +80,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     <node pkg="delivery_uav" type="gripper_node.py" name="gripper" output="screen" >
     </node>
 
-    <!-- iniciamos el nodo del gripper -->
+    <!-- iniciamos el nodo central -->
     <node pkg="delivery_uav" type="central_node.py" name="central" output="screen" >
     </node>
 
-
+    <!-- iniciamos el nodo controlador -->
+    <node pkg="delivery_uav" type="controller_node.py" name="control" output="screen" />
 </launch>
