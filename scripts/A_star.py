@@ -45,10 +45,25 @@ class Planner:
 
         # Cargamos el mapa en la variable self.map, que es una matriz de 0 y 1, con 1 identificando al obstaculo
         # El mapa tiene 20 unidades en X y 16 unidades en Y, con origen de coordenadas en la esquina superior izquierda
-        self.map = self.read_pgm("lab2.pgm", byteorder='<')
-        self.height = 2000
-        self.width = 2000
-        self.resolution = 0.05
+        imagen = self.read_pgm("mapa1.pgm", byteorder='<')
+        self.map=np.zeros((166,166))
+        self.map[imagen==254]=254
+        #Anadimos seguridad 
+        for i in range(10,150,1) :
+            for j in range(10,150,1):
+                if imagen[i,j]!=254:
+                    for k in range(3):
+                        self.map[i+k,j]=0
+                        self.map[i+k,j+k]=0
+                        self.map[i,j+k]=0
+                        self.map[i-k,j]=0
+                        self.map[i-k,j-k]=0
+                        self.map[i,j-k]=0
+                        self.map[i-k,j+k]=0
+                        self.map[i+k,j-k]=0
+        self.height = 166
+        self.width = 166
+        self.resolution = 0.3
         
     def euclidean_distance(self, posicion_actual, posicion_final):
         """Distancia euclidea entre posicion actual y final"""
@@ -88,10 +103,19 @@ class Planner:
         # Estas variables son para obtener elementos de una lista
         self.index_found = 0
         self.elemento_found = lista()
+
+        self.offsX=83
+        self.offsY=83
+        
+        # Paso previo: Es necesario hacer un cambio de coordenadas, dado que el mapa procesado tiene su origen en el elemento 
+        # arriba a la izquierda y en el simulador, el origen de coordenadas es en el centro
+        # Se ha obtenido que:
+        start_cell_map = [int(round(data.start.xyz[0]/0.3)+self.offsX), int(self.offsY-round(data.start.xyz[1]))] 
+        goal_cell_map = [int(round(data.goal.xyz[0]/0.3)+self.offsX), int(self.offsY-round(data.goal.xyz[1]/0.3))]
          # Paso 0: Determinamos los atributos de la celda actual y se introduce el punto en la lista abierta
-        self.celda_actual.punto = [data.start.xyz[0],data.start.xyz[1]]
-        self.celda_actual.padre = [data.start.xyz[0],data.start.xyz[1]]
-        self.celda_actual.h = self.manhattan_distance([data.start.xyz[0],data.start.xyz[1]], [data.goal.xyz[0],data.goal.xyz[1]])
+        self.celda_actual.punto = [start_cell_map[0],start_cell_map[1]]
+        self.celda_actual.padre = [start_cell_map[0],start_cell_map[1]]
+        self.celda_actual.h = self.manhattan_distance([start_cell_map[0],start_cell_map[1]], [goal_cell_map[0],goal_cell_map[1]])
         self.celda_actual.f = self.celda_actual.h
         self.lista_abierta.append(self.celda_actual) # append nos permite introducir elementos en vectores
 
@@ -106,7 +130,7 @@ class Planner:
 
 
             # Paso 2: Comprobar si el punto que se esta procesando es el destino
-            if (self.celda_actual.punto == [data.goal.xyz[0],data.goal.xyz[1]]): break  # me salgo del bucle
+            if (self.celda_actual.punto == [goal_cell_map[0],goal_cell_map[1]]): break  # me salgo del bucle
 
 
             # Paso 3: Calcular celdas vecinas a la actual              
@@ -131,7 +155,7 @@ class Planner:
                 # primero comprobamos si el punto seleccionado se corresponde con un punto en el mapa
                 # OJO: la coordenada X me da la fila, que es el valor de Y del punto
                 # si el punto es [3,12] yo quiero la columna 3, y la fila 12
-                if self.map[lista_vecinos[i].punto[1]][lista_vecinos[i].punto[0]] == 0:
+                if self.map[lista_vecinos[i].punto[1]][lista_vecinos[i].punto[0]] == 254:
                     # Si no es un obstaculo, comprobamos si esta en la lista cerrada (es decir, si ya lo hemos procesado, no lo procesamos de nuevo)
                     if self.check_in_list(lista_vecinos[i], self.lista_cerrada):
                         # eliminamos el elemento de la lista, y decrementamos en 1 el contador para escoger correctamente el siguiente elemento
@@ -160,7 +184,7 @@ class Planner:
                 # o que el punto no se encuentra en la lista abierta
                 if ((costeNuevo < self.elemento_found.g) or (temp == 0)):
                     # calculamos los parametros del punto
-                    point.h = self.manhattan_distance(point.punto, [data.goal.xyz[0],data.goal.xyz[1]])
+                    point.h = self.manhattan_distance(point.punto, [goal_cell_map[0],goal_cell_map[1]])
                     point.g = costeNuevo
                     point.f = point.h + point.g
                     point.padre = self.celda_actual.punto
@@ -185,7 +209,7 @@ class Planner:
         path = [] # vector con los puntos por los que pasaremos
         
          # mientras que 
-        while self.celda_actual.punto != data.start.xyz:
+        while self.celda_actual.punto != start_cell_map:
             path.append(self.celda_actual.punto) # meto el punto actual
             # busco el padre en la lista para ver el punto, primero pongo que el padre sea el punto de la celda actual
             self.celda_actual.punto = self.celda_actual.padre

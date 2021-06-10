@@ -45,7 +45,7 @@ class user_interface_server():
         self.goto = service_client('/del_uav/goto',goto_srv)
         self.land = service_client('/ual/land',Land)
         self.gripper = service_client('/del_uav/gripper_cmd',gripper_srv)
-        #self.planner = service_client('/del_uav/planner',planner_srv)
+        self.planner = service_client('/del_uav/planner',planner_srv)
 
     def ual_state_checker(self,data):
         # al leer el estado, comprobamos que el estado sea landed armed para poder hacer start
@@ -177,7 +177,7 @@ class user_interface_server():
         #MODO AUTOMATICO: Principal modo de funcionamiento, el UAV se desplaza a un punto dado
         print("AUTO MODE [CN]: Starting the auto mode. The goal set is [%d, %d, %d]."%(goal[0],goal[1],goal[2]))
 
-        '''
+        
         #SOLO DESCOMENTAR SI EL SERVICO DEL PLANNER FUNCIONA Y HAS DESCOMENTADO ARRIBA SU HANDLER
         # PRIMERO LLAMARIAMOS AL SERVICIO DEL PLANNER QUE NOS SUMINISTRE LA TRAYECTORIA
         request = planner_srv._request_class()
@@ -193,10 +193,10 @@ class user_interface_server():
         else:
             print('AUTO MODE [CN]: Succesfull Planner service call.')
 
-        self.trayectory = response'''
+        self.trayectory = response
         # IMPORTANTE:
         # COMO NO DISPONEMOS DE PLANNER, SUMINISTRAMOS UNA TRAYECTORIA INVENTADA
-        self.trayectory = [[-1,-1,3],[-2,-2,3],[-2,-2,4],[-3,-3,4],[-4,-4,4],[-3,-3,4],[-2,-2,4],[-2,-2,3],[-2,-3,3]]
+        '''self.trayectory = [[-1,-1,3],[-2,-2,3],[-2,-2,4],[-3,-3,4],[-4,-4,4],[-3,-3,4],[-2,-2,4],[-2,-2,3],[-2,-3,3]]'''
 
         # En este caso vamos a llamar al mismo servicio de forma recurrente, por lo que es interesante usar una conexion persistente con el servicio
         # Por tanto, inicializaremos la conexion antes de entrar al bucle
