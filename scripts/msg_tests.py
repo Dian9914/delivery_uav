@@ -7,10 +7,10 @@ from delivery_uav.srv import planner_srv, user_interface
 response = planner_srv._request_class()
 request = user_interface._request_class()
 
-response.goal.xyz=[1,2,3]
+response.goal=[1,2,3]
 
 print response
-print response.goal.xyz[1]
+print response.goal[1]
 
 
 print request

@@ -106,12 +106,15 @@ class Planner:
 
         self.offsX=83
         self.offsY=83
+
+        start=data.start.xyz
+        goal=data.goal.xyz
         
         # Paso previo: Es necesario hacer un cambio de coordenadas, dado que el mapa procesado tiene su origen en el elemento 
         # arriba a la izquierda y en el simulador, el origen de coordenadas es en el centro
         # Se ha obtenido que:
-        start_cell_map = [int(round(data.start.xyz[0]/0.3)+self.offsX), int(self.offsY-round(data.start.xyz[1]))] 
-        goal_cell_map = [int(round(data.goal.xyz[0]/0.3)+self.offsX), int(self.offsY-round(data.goal.xyz[1]/0.3))]
+        start_cell_map = [int(round(start[0]/0.3)+self.offsX), int(self.offsY-round(start[1]))] 
+        goal_cell_map = [int(round(goal[0]/0.3)+self.offsX), int(self.offsY-round(goal[0]/0.3))]
          # Paso 0: Determinamos los atributos de la celda actual y se introduce el punto en la lista abierta
         self.celda_actual.punto = [start_cell_map[0],start_cell_map[1]]
         self.celda_actual.padre = [start_cell_map[0],start_cell_map[1]]
@@ -124,7 +127,7 @@ class Planner:
         while True:
             # Paso 1: Sacar el primer elemento de la lista abierta, y meterlo en la cerrada
             # El primer elemento de la lista abierta sera aquel de menor f (coste)
-            self.lista_cerrada.append(self.lista_abierta[0])
+            self.lista_cerrada.append(self.lista_abierta[0])  #AQUI DIÓ ERROR
             self.celda_actual = self.lista_abierta[0]
             self.lista_abierta.pop(0)  # pop nos permite eliminar una fila de un array
 
