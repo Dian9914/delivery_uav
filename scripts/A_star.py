@@ -113,36 +113,42 @@ class Planner:
         # Paso previo: Es necesario hacer un cambio de coordenadas, dado que el mapa procesado tiene su origen en el elemento 
         # arriba a la izquierda y en el simulador, el origen de coordenadas es en el centro
         # Se ha obtenido que:
-        start_cell_map = [int(round(start[0]/0.3)+self.offsX), int(self.offsY-round(start[1]))] 
-        goal_cell_map = [int(round(goal[0]/0.3)+self.offsX), int(self.offsY-round(goal[0]/0.3))]
+        start_cell_map = [int(round(start[0]/0.3)+self.offsX), int(self.offsY-round(start[1]/0.3))] 
+        goal_cell_map = [int(round(goal[0]/0.3)+self.offsX), int(self.offsY-round(goal[1]/0.3))]
          # Paso 0: Determinamos los atributos de la celda actual y se introduce el punto en la lista abierta
         self.celda_actual.punto = [start_cell_map[0],start_cell_map[1]]
         self.celda_actual.padre = [start_cell_map[0],start_cell_map[1]]
-        self.celda_actual.h = self.manhattan_distance([start_cell_map[0],start_cell_map[1]], [goal_cell_map[0],goal_cell_map[1]])
+        self.celda_actual.h = self.manhattan_distance(start_cell_map, goal_cell_map)
         self.celda_actual.f = self.celda_actual.h
         self.lista_abierta.append(self.celda_actual) # append nos permite introducir elementos en vectores
+        #Miramos si el punto es valido
+        if self.map[goal_cell_map[1],goal_cell_map[0]]==254:
+            meta=1
+        else:
+            meta=0
+            print('Este punto no es valido')
 
 
         # asumimos que siempre existe un camino posible entre inicio y fin
-        while True:
+        while self.lista_abierta and meta==1:
             # Paso 1: Sacar el primer elemento de la lista abierta, y meterlo en la cerrada
             # El primer elemento de la lista abierta sera aquel de menor f (coste)
-            self.lista_cerrada.append(self.lista_abierta[0])  #AQUI DIÓ ERROR
+            self.lista_cerrada.append(self.lista_abierta[0])  #AQUI DIo ERROR
             self.celda_actual = self.lista_abierta[0]
             self.lista_abierta.pop(0)  # pop nos permite eliminar una fila de un array
-
+            #print('paso1')
 
             # Paso 2: Comprobar si el punto que se esta procesando es el destino
             if (self.celda_actual.punto == [goal_cell_map[0],goal_cell_map[1]]): break  # me salgo del bucle
 
-
+            #print('paso2')
             # Paso 3: Calcular celdas vecinas a la actual              
             # definir vector vecinos y vecinos filtrados (alternativa, usar clear)
             # Consideracion: Los vecinos diagonales no se cuentan
             lista_vecinos = []
-
+            
             # creamos el array del tipo lista, y solo metemos dentro los puntos vecinos (el calculo de parametros vendra despues)
-            for index in range(4):
+            for index in range(8):
                 lista_vecinos.append(lista())
 
             # calculamos los vecinos como los adyacentes sin diagonal
@@ -151,6 +157,11 @@ class Planner:
             lista_vecinos[2].punto = [self.celda_actual.punto[0]-1, self.celda_actual.punto[1]  ]
             lista_vecinos[3].punto = [self.celda_actual.punto[0],   self.celda_actual.punto[1]-1]
 
+            lista_vecinos[4].punto = [self.celda_actual.punto[0]+1, self.celda_actual.punto[1]+1]
+            lista_vecinos[5].punto = [self.celda_actual.punto[0]+1, self.celda_actual.punto[1]-1]
+            lista_vecinos[6].punto = [self.celda_actual.punto[0]-1, self.celda_actual.punto[1]+1]
+            lista_vecinos[7].punto = [self.celda_actual.punto[0]-1, self.celda_actual.punto[1]-1]
+            #print('paso3')
             # Paso 4.1: Filtrado de vecinos
             i=0
             # para cada vecino
@@ -166,12 +177,13 @@ class Planner:
                         i=i-1
                 else:
                     lista_vecinos.pop(i)
-                    i=i-1    
+                    i=i-1
+                    print('obstaculo') 
 
                 # pasamos al siguiente elemento
                 i=i+1
             # lista_vecinos ahora contiene los vecinos que van a ser procesados
-            
+            #print('paso41')
             # Paso 4.2: Procesado de vecinos
             # Para cada vecino... (bucle autoindexado)
             for point in lista_vecinos:
@@ -199,36 +211,49 @@ class Planner:
                     else:  
                         # si no actualizamos los valores para el punto de la lista abierta
                         self.lista_abierta[self.index_found] = point
+                        print('nuevo valor lista abierta')
 
-
+            #print('paso42')
             # Paso 5: Ordenar la lista abierta
             # Buscaremos ordenarla por el valor de f de menor a mayor. En caso de empate se coge el valor de h
             self.lista_abierta.sort(key=lambda var: (var.f, var.h)) 
-            
+            #print('paso5')
+            #print(self.lista_abierta)
         ## --FIN DEL BUCLE--
         # Paso 6: ahora tenemos que obtener los puntos de forma regresiva
         # para ello partimos del punto final, comprobamos su padre, y lo buscamos en la lista cerrada
         # luego ese punto pasa a ser el siguiente y asi sucesivamente
-        path = [] # vector con los puntos por los que pasaremos
+        if meta==1:
+            path = [] # vector con los puntos por los que pasaremos
         
-         # mientras que 
-        while self.celda_actual.punto != start_cell_map:
-            path.append(self.celda_actual.punto) # meto el punto actual
-            # busco el padre en la lista para ver el punto, primero pongo que el padre sea el punto de la celda actual
-            self.celda_actual.punto = self.celda_actual.padre
+            # mientras que 
+            while self.celda_actual.punto != start_cell_map:
+                path.append(self.celda_actual.punto) # meto el punto actual
+                # busco el padre en la lista para ver el punto, primero pongo que el padre sea el punto de la celda actual
+                self.celda_actual.punto = self.celda_actual.padre
 
-            # busco en la lista y obtengo el elemento de lista cerrada donde se encuentra (en index_found)
-            self.check_in_list(self.celda_actual, self.lista_cerrada) # obtengo self.index_found
-            self.celda_actual = self.lista_cerrada[self.index_found] # me cambio a este punto
+                # busco en la lista y obtengo el elemento de lista cerrada donde se encuentra (en index_found)
+                self.check_in_list(self.celda_actual, self.lista_cerrada) # obtengo self.index_found
+                self.celda_actual = self.lista_cerrada[self.index_found] # me cambio a este punto
 
-        # por ultimo, la lista de puntos a seguir sera la inversa de la obtenida
-        path.reverse()
-        response=planner_route()
-        for ii in range(0,len(path)):
-            path[ii].append(3)
-            response.point.append(path[ii])
+                # por ultimo, la lista de puntos a seguir sera la inversa de la obtenida
+            path.reverse()
+            #for i in range(len(path)):
+             #path[i] = [(path[i][0]-self.offsX)*0.3,(self.offsY-path[i][1])*0.3]
+            print(path)
+            print(goal_cell_map)
+            response=planner_route()
+            for ii in range(0,len(path)):
+                path[ii].append(3)
+                response.point.append(path[ii])
 
+            
+        else:
+            
+            response=planner_route()
+            response=[0,0,3]
         return response
+
         
             
     def empezar(self):
