@@ -28,7 +28,8 @@ class Loc_KF:
         self.alt_ok = False
 
         # Topics we need to subscribe to
-        self.odom_sub = rospy.Subscriber("/ual/odom", Odometry, self.odom_callback)
+        # Using visual odometry
+        self.odom_sub = rospy.Subscriber("/odom", Odometry, self.odom_callback)
 
         self.gps_pose = Pose()
         self.gps_twist = Twist()
@@ -49,7 +50,8 @@ class Loc_KF:
 
         # Wait for initial measurements
         local_rate = rospy.Rate(30)
-        while (self.odom_ok is False and self.gps_ok is False and self.alt_ok is False):
+        # ----- PENDIENTE: este bucle no funciona -----
+        while (self.odom_ok != False and self.gps_ok != False and self.alt_ok != False):
             print("Estoy en bucle")
             local_rate.sleep()
             
@@ -62,12 +64,18 @@ class Loc_KF:
         # KF variables
         # Vector de estados mu = X,Y,Z,vx,vy,vz, con z las del altimetro
         self.mu = sim_origin
-        np.append(self.mu, [0.0,0.0,0.0])    
+        self.mu = np.append(self.mu, [0.0,0.0,0.0])    
         self.mu_p = self.mu 
+
+        # initial odometry value ---PENDING TO REMOVE---
+        self.odom_data = self.mu
+        self.odom_cov = np.ones(6)
+        
 
         # sigma, Q_gps -> given by odom & sensors
         self.sigma = np.zeros([6,6])
-        self.sigma_p = self.sigma
+        #self.sigma_p = self.sigma
+        self.sigma_p = np.zeros([6,6])
 
         # Q for altimeter
         q_alt = 5
@@ -107,7 +115,8 @@ class Loc_KF:
         # La mu predicha es la de la odometria, que tiene deriva que vamos a corregir
         self.mu_p = self.odom_data
         #self.sigma_p = np.diag(np.append(self.odom_cov_pos, self.odom_cov_vel))
-        self.sigma_p = np.linalg.multi_dot([self.A, self.sigma, np.transpose(self.A)]) + self.R # our covariance
+        #self.sigma_p = np.linalg.multi_dot([self.A, self.sigma, np.transpose(self.A)]) + self.R # our covariance
+        self.sigma_p = np.diag(self.odom_cov)
 
     def KF_act(self):
         # Kt=sigma_p*C'*(C*sigma_p*C'+Q)^-1;
@@ -128,11 +137,11 @@ class Loc_KF:
         print(self.mu)
         print("")     
 
-        print("Datos odometria")
-        print(self.odom_data)
+        #print("Datos odometria")
+        #print(self.odom_data)
 
-        print("Sigma estimada")
-        print(self.sigma)
+        #print("Sigma estimada")
+        #print(self.sigma)
 
         # Result publishing
         self.mu_pos_pub_obj.x = self.mu[0]
@@ -156,11 +165,16 @@ class Loc_KF:
 
 
     def odom_callback(self, data):
+        # Extract data from an nav_msgs/Odometry message
         self.odom_data = np.asarray([data.pose.pose.position.x, data.pose.pose.position.y, data.pose.pose.position.z, 
                                      data.twist.twist.linear.x, data.twist.twist.linear.y, data.twist.twist.linear.z])
         # Alternativa: Hacer reshape
-        self.odom_cov_pos = np.asarray([data.pose.covariance[21], data.pose.covariance[28], data.pose.covariance[35]])
-        self.odom_cov_vel = np.asarray([data.twist.covariance[21], data.twist.covariance[28], data.twist.covariance[35]])
+        #self.odom_cov_pos = np.asarray([data.pose.covariance[21], data.pose.covariance[28], data.pose.covariance[35]])
+        #self.odom_cov_vel = np.asarray([data.twist.covariance[21], data.twist.covariance[28], data.twist.covariance[35]])
+
+        self.odom_cov = np.asarray([data.pose.covariance[21], data.pose.covariance[28], data.pose.covariance[35], 
+                                    data.twist.covariance[21], data.twist.covariance[28], data.twist.covariance[35]])
+
         #print(self.odom_cov_pos)
         #print(self.odom_cov_vel)
         self.odom_ok = True
@@ -179,6 +193,7 @@ class Loc_KF:
         self.alt_ok = True
         
     def T_from_odom(self, odom):
+        '''PENDIENTE: revisar si esto esta bien'''
         T_trans=np.asarray([[1.0,0.0,0.0,odom[0]-self.odom_data_ant[0]],
                             [0.0,1.0,0.0,odom[1]-self.odom_data_ant[1]],
                             [0.0,0.0,1.0,odom[2]-self.odom_data_ant[2]],
