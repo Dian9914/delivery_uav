@@ -14,11 +14,11 @@ from math import sqrt, pow
 class lista:
     # esta clase contiene los atributos que definen la lista abierta y la cerrada
     # cada elemento de la lista sera un objeto que contiene el punto, el punto padre, y los valores de f, g y h
-    punto = [0, 0]
+    punto = [0, 0,0]
     f = 0
     g = 0
     h = 0
-    padre = [0, 0]
+    padre = [0, 0,0]
 
     def __init___(self):
         pass
@@ -45,22 +45,53 @@ class Planner:
 
         # Cargamos el mapa en la variable self.map, que es una matriz de 0 y 1, con 1 identificando al obstaculo
         # El mapa tiene 20 unidades en X y 16 unidades en Y, con origen de coordenadas en la esquina superior izquierda
-        imagen = self.read_pgm("mapa1.pgm", byteorder='<')
-        self.map=np.zeros((166,166))
-        self.map[imagen==254]=254
+        imagen0 = self.read_pgm("mapa0.pgm", byteorder='<')
+        imagen3 = self.read_pgm("mapa3.pgm", byteorder='<')
+        imagen6 = self.read_pgm("mapa6.pgm", byteorder='<')
+        self.map=np.zeros((166,166,7))
+        self.map[imagen0==254,1]=254
+        self.map[imagen3==254,2:5]=254
+        self.map[imagen0==254,5:7]=254
         #Anadimos seguridad 
         for i in range(10,150,1) :
             for j in range(10,150,1):
-                if imagen[i,j]!=254:
+                if imagen0[i,j]!=254:
                     for k in range(3):
-                        self.map[i+k,j]=0
-                        self.map[i+k,j+k]=0
-                        self.map[i,j+k]=0
-                        self.map[i-k,j]=0
-                        self.map[i-k,j-k]=0
-                        self.map[i,j-k]=0
-                        self.map[i-k,j+k]=0
-                        self.map[i+k,j-k]=0
+                            self.map[i+k,j,0:2]=0
+                            self.map[i+k,j+k,0:2]=0
+                            self.map[i,j+k,0:2]=0
+                            self.map[i-k,j,0:2]=0
+                            self.map[i-k,j-k,0:2]=0
+                            self.map[i,j-k,0:2]=0
+                            self.map[i-k,j+k,0:2]=0
+                            self.map[i+k,j-k,0:2]=0
+                else:
+                    self.map[i,j,0:2]=254
+                    
+                if imagen3[i,j]!=254:
+                    for k in range(3):
+                        self.map[i+k,j,2:6]=0
+                        self.map[i+k,j+k,2:5]=0
+                        self.map[i,j+k,2:5]=0
+                        self.map[i-k,j,2:5]=0
+                        self.map[i-k,j-k,2:5]=0
+                        self.map[i,j-k,2:5]=0
+                        self.map[i-k,j+k,2:5]=0
+                        self.map[i+k,j-k,2:5]=0
+                else:
+                    self.map[i,j,2:5]=254
+                if imagen6[i,j]!=254:
+                    for k in range(3):
+                        self.map[i+k,j,5:7]=0
+                        self.map[i+k,j+k,5:7]=0
+                        self.map[i,j+k,5:7]=0
+                        self.map[i-k,j,5:7]=0
+                        self.map[i-k,j-k,5:7]=0
+                        self.map[i,j-k,5:7]=0
+                        self.map[i-k,j+k,5:7]=0
+                        self.map[i+k,j-k,5:7]=0
+                else:
+                    self.map[i,j,5:7]=254
         self.height = 166
         self.width = 166
         self.resolution = 0.3
@@ -69,12 +100,13 @@ class Planner:
         """Distancia euclidea entre posicion actual y final"""
         """Se calcula mediante las coordenadas x e y de los puntos, y obteniendo la hipotenusa del triangulo resultante"""
         return sqrt(pow((posicion_final[0] - posicion_actual[0]), 2) +
-                    pow((posicion_final[1] - posicion_actual[1]), 2))
+                    pow((posicion_final[1] - posicion_actual[1]), 2) +
+                    pow((posicion_final[2] - posicion_actual[2]),2))
 
     def manhattan_distance(self, node_initial, node_final):
         """Distancia Manhattan: Se define como la suma de la distancia en X y la distancia en Y
             entre los dos nodos"""
-        return (abs(node_final[0]-node_initial[0]) + abs(node_final[1]-node_initial[1]))
+        return (abs(node_final[0]-node_initial[0]) + abs(node_final[1]-node_initial[1])+abs(node_final[2]-node_initial[2]))
     
     def check_in_list(self, elemento, lista_b):
         """Comprueba si un elemento del tipo lista (objeto) se encuentra dentro de un array de objetos lista.
@@ -113,54 +145,78 @@ class Planner:
         # Paso previo: Es necesario hacer un cambio de coordenadas, dado que el mapa procesado tiene su origen en el elemento 
         # arriba a la izquierda y en el simulador, el origen de coordenadas es en el centro
         # Se ha obtenido que:
-        start_cell_map = [int(round(start[0]/0.3)+self.offsX), int(self.offsY-round(start[1]/0.3))] 
-        goal_cell_map = [int(round(goal[0]/0.3)+self.offsX), int(self.offsY-round(goal[1]/0.3))]
+        start_cell_map = [int(round(start[0]/0.3)+self.offsX), int(self.offsY-round(start[1]/0.3)),int(start[2])] 
+        goal_cell_map = [int(round(goal[0]/0.3)+self.offsX), int(self.offsY-round(goal[1]/0.3)),int(goal[2])]
          # Paso 0: Determinamos los atributos de la celda actual y se introduce el punto en la lista abierta
-        self.celda_actual.punto = [start_cell_map[0],start_cell_map[1]]
-        self.celda_actual.padre = [start_cell_map[0],start_cell_map[1]]
+        self.celda_actual.punto = [start_cell_map[0],start_cell_map[1],start_cell_map[2]]
+        self.celda_actual.padre = [start_cell_map[0],start_cell_map[1],start_cell_map[2]]
         self.celda_actual.h = self.manhattan_distance(start_cell_map, goal_cell_map)
         self.celda_actual.f = self.celda_actual.h
         self.lista_abierta.append(self.celda_actual) # append nos permite introducir elementos en vectores
         #Miramos si el punto es valido
-        if self.map[goal_cell_map[1],goal_cell_map[0]]==254:
+        if (self.map[goal_cell_map[1],goal_cell_map[0],goal_cell_map[2]]==254):
             meta=1
         else:
             meta=0
             print('Este punto no es valido')
 
 
-        
-        while self.lista_abierta and meta==1:
+        print(self.lista_abierta[0].punto)
+        print(meta)
+        while meta==1 and not  self.lista_abierta==[]:
             # Paso 1: Sacar el primer elemento de la lista abierta, y meterlo en la cerrada
             # El primer elemento de la lista abierta sera aquel de menor f (coste)
             self.lista_cerrada.append(self.lista_abierta[0])  #AQUI DIo ERROR
             self.celda_actual = self.lista_abierta[0]
             self.lista_abierta.pop(0)  # pop nos permite eliminar una fila de un array
-            #print('paso1')
-
+            print('paso1')
+            print(self.celda_actual.punto)
             # Paso 2: Comprobar si el punto que se esta procesando es el destino
-            if (self.celda_actual.punto == [goal_cell_map[0],goal_cell_map[1]]): break  # me salgo del bucle
+            if (self.celda_actual.punto == [goal_cell_map[0],goal_cell_map[1],goal_cell_map[2]]): break  # me salgo del bucle
 
-            #print('paso2')
+            print('paso2')
             # Paso 3: Calcular celdas vecinas a la actual              
             # definir vector vecinos y vecinos filtrados (alternativa, usar clear)
             # Consideracion: Los vecinos diagonales no se cuentan
             lista_vecinos = []
             
             # creamos el array del tipo lista, y solo metemos dentro los puntos vecinos (el calculo de parametros vendra despues)
-            for index in range(8):
+            for index in range(26):
                 lista_vecinos.append(lista())
 
             # calculamos los vecinos como los adyacentes 
-            lista_vecinos[0].punto = [self.celda_actual.punto[0]+1, self.celda_actual.punto[1]  ]
-            lista_vecinos[1].punto = [self.celda_actual.punto[0],   self.celda_actual.punto[1]+1]
-            lista_vecinos[2].punto = [self.celda_actual.punto[0]-1, self.celda_actual.punto[1]  ]
-            lista_vecinos[3].punto = [self.celda_actual.punto[0],   self.celda_actual.punto[1]-1]
+            lista_vecinos[0].punto = [self.celda_actual.punto[0]+1, self.celda_actual.punto[1]  ,self.celda_actual.punto[2]]
+            lista_vecinos[1].punto = [self.celda_actual.punto[0],   self.celda_actual.punto[1]+1 ,self.celda_actual.punto[2]]
+            lista_vecinos[2].punto = [self.celda_actual.punto[0]-1, self.celda_actual.punto[1]   ,self.celda_actual.punto[2]]
+            lista_vecinos[3].punto = [self.celda_actual.punto[0],   self.celda_actual.punto[1]-1 ,self.celda_actual.punto[2]]
 
-            lista_vecinos[4].punto = [self.celda_actual.punto[0]+1, self.celda_actual.punto[1]+1]
-            lista_vecinos[5].punto = [self.celda_actual.punto[0]+1, self.celda_actual.punto[1]-1]
-            lista_vecinos[6].punto = [self.celda_actual.punto[0]-1, self.celda_actual.punto[1]+1]
-            lista_vecinos[7].punto = [self.celda_actual.punto[0]-1, self.celda_actual.punto[1]-1]
+            lista_vecinos[4].punto = [self.celda_actual.punto[0]+1, self.celda_actual.punto[1]+1 ,self.celda_actual.punto[2]]
+            lista_vecinos[5].punto = [self.celda_actual.punto[0]+1, self.celda_actual.punto[1]-1 ,self.celda_actual.punto[2]]
+            lista_vecinos[6].punto = [self.celda_actual.punto[0]-1, self.celda_actual.punto[1]+1 ,self.celda_actual.punto[2]]
+            lista_vecinos[7].punto = [self.celda_actual.punto[0]-1, self.celda_actual.punto[1]-1 ,self.celda_actual.punto[2]]
+            
+            lista_vecinos[8].punto = [self.celda_actual.punto[0]+1, self.celda_actual.punto[1]  ,self.celda_actual.punto[2]-1]
+            lista_vecinos[9].punto = [self.celda_actual.punto[0],   self.celda_actual.punto[1]+1 ,self.celda_actual.punto[2]-1]
+            lista_vecinos[10].punto = [self.celda_actual.punto[0]-1, self.celda_actual.punto[1]   ,self.celda_actual.punto[2]-1]
+            lista_vecinos[11].punto = [self.celda_actual.punto[0],   self.celda_actual.punto[1]-1 ,self.celda_actual.punto[2]-1]
+
+            lista_vecinos[12].punto = [self.celda_actual.punto[0]+1, self.celda_actual.punto[1]+1 ,self.celda_actual.punto[2]-1]
+            lista_vecinos[13].punto = [self.celda_actual.punto[0]+1, self.celda_actual.punto[1]-1 ,self.celda_actual.punto[2]-1]
+            lista_vecinos[14].punto = [self.celda_actual.punto[0]-1, self.celda_actual.punto[1]+1 ,self.celda_actual.punto[2]-1]
+            lista_vecinos[15].punto = [self.celda_actual.punto[0]-1, self.celda_actual.punto[1]-1 ,self.celda_actual.punto[2]-1]
+            
+            lista_vecinos[16].punto = [self.celda_actual.punto[0]+1, self.celda_actual.punto[1]  ,self.celda_actual.punto[2]+1]
+            lista_vecinos[17].punto = [self.celda_actual.punto[0],   self.celda_actual.punto[1]+1 ,self.celda_actual.punto[2]+1]
+            lista_vecinos[18].punto = [self.celda_actual.punto[0]-1, self.celda_actual.punto[1]   ,self.celda_actual.punto[2]+1]
+            lista_vecinos[19].punto = [self.celda_actual.punto[0],   self.celda_actual.punto[1]-1 ,self.celda_actual.punto[2]+1]
+
+            lista_vecinos[20].punto = [self.celda_actual.punto[0]+1, self.celda_actual.punto[1]+1 ,self.celda_actual.punto[2]+1]
+            lista_vecinos[21].punto = [self.celda_actual.punto[0]+1, self.celda_actual.punto[1]-1 ,self.celda_actual.punto[2]+1]
+            lista_vecinos[22].punto = [self.celda_actual.punto[0]-1, self.celda_actual.punto[1]+1 ,self.celda_actual.punto[2]+1]
+            lista_vecinos[23].punto = [self.celda_actual.punto[0]-1, self.celda_actual.punto[1]-1 ,self.celda_actual.punto[2]+1]
+            
+            lista_vecinos[24].punto = [self.celda_actual.punto[0], self.celda_actual.punto[1],self.celda_actual.punto[2]+1]
+            lista_vecinos[25].punto = [self.celda_actual.punto[0], self.celda_actual.punto[1] ,self.celda_actual.punto[2]-1]
             #print('paso3')
             # Paso 4.1: Filtrado de vecinos
             i=0
@@ -169,7 +225,7 @@ class Planner:
                 # primero comprobamos si el punto seleccionado se corresponde con un punto en el mapa
                 # OJO: la coordenada X me da la fila, que es el valor de Y del punto
                 # si el punto es [3,12] yo quiero la columna 3, y la fila 12
-                if self.map[lista_vecinos[i].punto[1],lista_vecinos[i].punto[0]] == 254:
+                if self.map[lista_vecinos[i].punto[1],lista_vecinos[i].punto[0],lista_vecinos[i].punto[2]] == 254:
                     # Si no es un obstaculo, comprobamos si esta en la lista cerrada (es decir, si ya lo hemos procesado, no lo procesamos de nuevo)
                     if self.check_in_list(lista_vecinos[i], self.lista_cerrada):
                         # eliminamos el elemento de la lista, y decrementamos en 1 el contador para escoger correctamente el siguiente elemento
@@ -199,7 +255,7 @@ class Planner:
                 # o que el punto no se encuentra en la lista abierta
                 if ((costeNuevo < self.elemento_found.g) or (temp == 0)):
                     # calculamos los parametros del punto
-                    point.h = self.manhattan_distance(point.punto, [goal_cell_map[0],goal_cell_map[1]])
+                    point.h = self.manhattan_distance(point.punto, [goal_cell_map[0],goal_cell_map[1],goal_cell_map[2]])
                     point.g = costeNuevo
                     point.f = point.h + point.g
                     point.padre = self.celda_actual.punto
@@ -217,7 +273,7 @@ class Planner:
             # Paso 5: Ordenar la lista abierta
             # Buscaremos ordenarla por el valor de f de menor a mayor. En caso de empate se coge el valor de h
             self.lista_abierta.sort(key=lambda var: (var.f, var.h)) 
-            #print('paso5') 
+            print('paso5') 
             #print(self.lista_abierta)
         ## --FIN DEL BUCLE--
         # Paso 6: ahora tenemos que obtener los puntos de forma regresiva
@@ -238,13 +294,12 @@ class Planner:
 
                 # por ultimo, la lista de puntos a seguir sera la inversa de la obtenida
             path.reverse()
-            #for i in range(len(path)):
-             #path[i] = [(path[i][0]-self.offsX)*0.3,(self.offsY-path[i][1])*0.3]
+            for i in range(len(path)):
+             path[i] = [(path[i][0]-self.offsX)*0.3,(self.offsY-path[i][1])*0.3,path[i][2]]
             print(path)
             print(goal_cell_map)
             response=planner_route()
             for ii in range(0,len(path)):
-                path[ii].append(3)
                 response.point.append(path[ii])
 
             
