@@ -133,9 +133,9 @@ class Loc_KF:
         self.sigma = np.matmul(np.eye(6) - np.matmul(self.Kt, self.C), self.sigma_p)  
 
         # Print for debugging
-        print("Mu estimada")
-        print(self.mu)
-        print("")     
+        #print("Mu estimada")
+        #print(self.mu)
+        #print("")     
 
         #print("Datos odometria")
         #print(self.odom_data)

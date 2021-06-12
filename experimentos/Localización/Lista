@@ -1,0 +1,2 @@
+Modelo base:
+q_alt = 5, q_gps = 1, r=0.5 (modelo), speed_cov_adj = 10
