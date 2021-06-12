@@ -301,8 +301,8 @@ class Planner:
             print(path)
             print(goal_cell_map)
             response=planner_srv._response_class()
-            for i in range(len(markerArray))
-                markerArray.markers.pop(0)
+            #for i in range(len(markerArray))
+            #    markerArray.markers.pop(0)
             for ii in range(0,len(path)):
                 response.path.append(path[ii][0])
                 response.path.append(path[ii][1])

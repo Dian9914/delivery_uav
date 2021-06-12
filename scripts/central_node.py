@@ -76,14 +76,12 @@ class user_interface_server():
         self.planner = service_client('/del_uav/planner',planner_srv)
 
     def ual_state_checker(self,data):
-        # al leer el estado, comprobamos que el estado sea landed armed para poder hacer start
-        # o flying auto para poder controlar
+        # al leer el estado, comprobamos que el estado sea landed armed (2) para poder hacer start
+        # o flying auto (4) para poder controlar
         if data.state==2 and self.ual_state==0:
             self.ual_state=1
-            print("CENTRAL NODE: UAL ready for take off.")
         elif data.state==5 and self.ual_state==1:
             self.ual_state=0
-            print("CENTRAL NODE: UAL is not ready for take off.")
         elif data.state==4 and self.ual_state==1:
             self.ual_state=2
             print("CENTRAL NODE: UAL is ready for taking waypoints.")
@@ -146,6 +144,8 @@ class user_interface_server():
         # Para controlar no estar demasiado tiempo esperando, usamos un contador
         t = 0
         bandera_state = False #bandera para evitar falsos positivos
+
+        print('START SERVICE [CN]: Requesting take off to UAL. This may take a while.')
         while not (self.ual_state == 1 and bandera_state): 
             t=t+1
             if self.ual_state == 1:
@@ -218,6 +218,7 @@ class user_interface_server():
         request.goal.xyz[2]=goal[2]
 
         
+        print("AUTO MODE [CN]: Requesting trayectory to planner node. This may take a while.")
         response = self.planner.single_response(request)
         if not response:
             print('AUTO MODE [CN]: Error with Planner service. Aborting travel')
@@ -226,12 +227,8 @@ class user_interface_server():
             print('AUTO MODE [CN]: Succesfull Planner service call.')
 
         self.trayectory = []
-        for i in range(0,len(response),3):
-            self.trayectory.append([response[i],response[i+1],response[i+2]])
-
-        # IMPORTANTE:
-        # COMO NO DISPONEMOS DE PLANNER, SUMINISTRAMOS UNA TRAYECTORIA INVENTADA
-        '''self.trayectory = [[-1,-1,3],[-2,-2,3],[-2,-2,4],[-3,-3,4],[-4,-4,4],[-3,-3,4],[-2,-2,4],[-2,-2,3],[-2,-3,3]]'''
+        for i in range(0,len(response.path),3):
+            self.trayectory.append([response.path[i],response.path[i+1],response.path[i+2]])
 
         # En este caso vamos a llamar al mismo servicio de forma recurrente, por lo que es interesante usar una conexion persistente con el servicio
         # Por tanto, inicializaremos la conexion antes de entrar al bucle
