@@ -48,7 +48,7 @@ class Planner:
         imagen0 = self.read_pgm("mapa0.pgm", byteorder='<')
         imagen3 = self.read_pgm("mapa3.pgm", byteorder='<')
         imagen6 = self.read_pgm("mapa6.pgm", byteorder='<')
-        self.map=np.zeros((166,166,7))
+        self.map=np.zeros((166,166,8))
         self.map[imagen0==254,1]=254
         self.map[imagen3==254,2:5]=254
         self.map[imagen0==254,5:7]=254
