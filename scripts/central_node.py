@@ -23,7 +23,7 @@ class user_interface_server():
             sim_origin = rospy.get_param('~sim_origin')
             #sim_origin.append(1.0)
         else:
-            sim_origin = np.asarray([0.0, 0.0, 0.0])
+            sim_origin = [0.0, 0.0, 0.0]
 
         self.home = [sim_origin[0], sim_origin[1], 3.0]   #punto "casa" que consideramos nuestra posicion inicial
         self.trayectory = []        #matriz donde se guardara la trayectoria dada por el planner
@@ -51,11 +51,11 @@ class user_interface_server():
         self.vc_travel = Condition(self.mtx_travel)
 
         # inicializacion de los clientes para los distintos servicios
-        # inicialización del servicio para despegar
+        # inicializacion del servicio para despegar
         print('CENTRAL NODE: Waiting for take off service')
         self.takeoff = service_client('/ual/take_off',TakeOff)
 
-        # inicializacion del servicio para movernos a la posición deseada
+        # inicializacion del servicio para movernos a la posicion deseada
         print('CENTRAL NODE: Waiting for go to service')
         # podemos utilizar el servicio de ual
         #self.goto = service_client('/ual/go_to_waypoint',GoToWaypoint)
@@ -296,7 +296,7 @@ class user_interface_server():
         # Esperamos a llegar al destino y estabilizarnos, las tolerancias aqui son mas finas
         t=0
         while not (abs(self.pose[0] - waypoint[0])<0.2 and abs(self.pose[1] - waypoint[1])<0.2 and abs(self.pose[2] - waypoint[2])<0.3) and t<10:
-            if abs(self.pose[0] - goal[0])<0.2 and abs(self.pose[1] - goal[1])<0.2 and abs(self.pose[2] - goal[2])<0.2
+            if abs(self.pose[0] - goal[0])<0.2 and abs(self.pose[1] - goal[1])<0.2 and abs(self.pose[2] - goal[2])<0.3:
                 t=t+1
             else:
                 t=0
