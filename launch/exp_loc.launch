@@ -100,7 +100,7 @@
 
 
     <!-- iniciamos el nodo encargado de la odometria usando lidar -->
-    <node pkg="rtabmap_ros" type="icp_odometry" name='icp_odometry' args="load rtabmap_ros/icp_odometry camera_nodelet_manager" output="screen">
+    <node pkg="rtabmap_ros" type="icp_odometry" name='icp_odometry' args="load rtabmap_ros/icp_odometry camera_nodelet_manager" output="log">
         <remap from="scan_cloud"      to="/del_uav/uav_laser_scan"/>
 	  
         <param name="frame_id"        type="string" value="lidar_base"/>   

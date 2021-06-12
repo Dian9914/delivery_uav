@@ -2,7 +2,7 @@
 
 import rospy
 from sensor_msgs.msg import PointCloud, PointCloud2
-from geometry_msgs.msg import Pose, PoseStamped, Twist, Point, Vector3
+from geometry_msgs.msg import Pose, PoseStamped, Twist, Point, Vector3, Transform
 from nav_msgs.msg import Odometry
 from mavros_msgs.msg import Altitude
 from delivery_uav.srv import goto_srv
@@ -12,6 +12,8 @@ import numpy as np # numpy general
 from open3d_ros_helper import open3d_ros_helper as orh # open3d ros helper, funciones para facilitarnos la vida
 import copy
 import timeit
+
+from rtabmap_ros.msg import OdomInfo
 
 class Loc_KF:
     def __init__(self):
@@ -37,6 +39,11 @@ class Loc_KF:
 
         self.alt_value = 0.0
         self.alt_sub = rospy.Subscriber("/mavros/altitude", Altitude, self.alt_callback)
+
+
+        # Topic to find ICP transformation matrix
+        self.T_sub = rospy.Subscriber("/odom_info", OdomInfo, self.T_callback)
+        self.T = np.diag(np.ones(4))
 
         print("[KF] Sub topics OK")
 
@@ -113,7 +120,14 @@ class Loc_KF:
 
     def KF_pred(self):
         # La mu predicha es la de la odometria, que tiene deriva que vamos a corregir
-        self.mu_p = self.odom_data
+        #self.mu_p = self.odom_data
+
+        # Variante con T
+        self.mu_p = np.matmul(self.T, np.append(self.odom_data[0:3],1))
+        self.mu_p = np.delete(self.mu_p, 3)
+        self.mu_p = np.append(self.mu_p, self.odom_data[3:6])
+
+
         #self.sigma_p = np.diag(np.append(self.odom_cov_pos, self.odom_cov_vel))
         #self.sigma_p = np.linalg.multi_dot([self.A, self.sigma, np.transpose(self.A)]) + self.R # our covariance
         self.sigma_p = np.diag(self.odom_cov)
@@ -133,15 +147,21 @@ class Loc_KF:
         self.sigma = np.matmul(np.eye(6) - np.matmul(self.Kt, self.C), self.sigma_p)  
 
         # Print for debugging
-        #print("Mu estimada")
-        #print(self.mu)
-        #print("")     
+        print("Mu estimada")
+        print(self.mu)
+        print("")     
 
         #print("Datos odometria")
         #print(self.odom_data)
 
         #print("Sigma estimada")
         #print(self.sigma)
+
+        # T result
+        print("Estimated T")
+        print(self.T)
+        print("")
+        #print("Estimated point")
 
         # Result publishing
         self.mu_pos_pub_obj.x = self.mu[0]
@@ -192,14 +212,8 @@ class Loc_KF:
         self.alt_value = data.local
         self.alt_ok = True
         
-    def T_from_odom(self, odom):
-        '''PENDIENTE: revisar si esto esta bien'''
-        T_trans=np.asarray([[1.0,0.0,0.0,odom[0]-self.odom_data_ant[0]],
-                            [0.0,1.0,0.0,odom[1]-self.odom_data_ant[1]],
-                            [0.0,0.0,1.0,odom[2]-self.odom_data_ant[2]],
-                            [0.0,0.0,0.0,1.0]])
-
-        return T_trans
+    def T_callback(self, data):
+        self.T = orh.msg_to_se3(data.transform)
         
 
 
