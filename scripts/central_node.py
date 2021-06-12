@@ -1,5 +1,8 @@
 #!/usr/bin/env python
+# CENTRAL NODE: nodo encargado de centralizar las comunicaciones del sistema 
+# y ofrecer al usuario una interfaz
 
+# importamos los servicios y mensajes necesarios
 from delivery_uav.srv import gripper_srv, user_interface, planner_srv, goto_srv
 from delivery_uav.msg import gripper_state, waypoint, planner_route
 from uav_abstraction_layer.srv import GoToWaypoint, Land, TakeOff
@@ -7,17 +10,26 @@ from uav_abstraction_layer.msg import State
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped
 
+# importamos las librerias necesarias
 import rospy
-from threading import Lock, Condition
-from service_client import service_client #esta bien, aunque marque error. 
+from threading import Lock, Condition #libreria encargada del manejo de hilos
+from service_client import service_client #paquete creado por nosotros para manejar servicios
 
 class user_interface_server():
     def __init__(self):
         # Inicializacion de los parametros del sistema
-        self.home = [0, 0, 0]   #punto en el que se ejecuta start en coordenadas mapa (punto inciial)
+        # Obtenemos la posicion inicial de un parametro de ROS
+        if rospy.has_param('~sim_origin'):
+            sim_origin = rospy.get_param('~sim_origin')
+            #sim_origin.append(1.0)
+        else:
+            sim_origin = np.asarray([0.0, 0.0, 0.0])
+
+        self.home = [sim_origin[0], sim_origin[1], 3.0]   #punto "casa" que consideramos nuestra posicion inicial
         self.trayectory = []        #matriz donde se guardara la trayectoria dada por el planner
         self.pose = [0, 0, 0]   #posicion del UAV usada por UAL. Idealmente, estara en coordenadas mapa.
 
+        #locks para manejo de hilos
         self.mtx_auto = Lock()
         self.mtx_ready = Lock()
         self.mtx_started = Lock()
@@ -38,13 +50,29 @@ class user_interface_server():
         self.mtx_travel = Lock()
         self.vc_travel = Condition(self.mtx_travel)
 
-        # inicializacion de los clientes para los distintos servicios a usar
+        # inicializacion de los clientes para los distintos servicios
+        # inicialización del servicio para despegar
+        print('CENTRAL NODE: Waiting for take off service')
         self.takeoff = service_client('/ual/take_off',TakeOff)
-        #CUIDADO; DESCOMENTAR TAMBIEN EN AUTO_MODE LINEA 215 aprox
+
+        # inicializacion del servicio para movernos a la posición deseada
+        print('CENTRAL NODE: Waiting for go to service')
+        # podemos utilizar el servicio de ual
         #self.goto = service_client('/ual/go_to_waypoint',GoToWaypoint)
+        # o el nuestro.
+        #CUIDADO AL CAMBIAR EL SERVICIO DE CONTROL; DESCOMENTAR TAMBIEN EN AUTO_MODE LINEA 230 aprox
         self.goto = service_client('/del_uav/goto',goto_srv)
+
+        # inicializacion del servicio para aterrizar
+        print('CENTRAL NODE: Waiting for land service')
         self.land = service_client('/ual/land',Land)
+
+        # inicializacion del servicio para manejar el gripper
+        print('CENTRAL NODE: Waiting for gripper service')
         self.gripper = service_client('/del_uav/gripper_cmd',gripper_srv)
+
+        # inicializacion del servicio del planificador
+        print('CENTRAL NODE: Waiting for planner service')
         self.planner = service_client('/del_uav/planner',planner_srv)
 
     def ual_state_checker(self,data):
@@ -256,9 +284,9 @@ class user_interface_server():
                     print('AUTO MODE [CN]: Unrecognised input.')
                     continue
             # debemos esperar a haber llegado al punto para hacer la siguiente llamada. Para ello, usaremos rospy.sleep
-            wait = rospy.Rate(5) # vamos a esperar la condicion con una frecuencia de 2Hz, es decir, que el proceso estara
+            wait = rospy.Rate(10) # vamos a esperar la condicion con una frecuencia de 10Hz, es decir, que el proceso estara
             # bloqueado durante 0.2 segundos aproximadamente antes de comprobar que hemos llegado al punto
-            while not (abs(self.pose[0] - waypoint[0])<0.5 and abs(self.pose[1] - waypoint[1])<0.5 and abs(self.pose[2] - waypoint[2])<0.5):
+            while not (abs(self.pose[0] - waypoint[0])<0.2 and abs(self.pose[1] - waypoint[1])<0.2 and abs(self.pose[2] - waypoint[2])<0.5):
                 wait.sleep()
 
             # Una vez hemos hecho la orden, abrimos el mutex para permitir que otros hilos den ordenes al UAV
@@ -270,8 +298,8 @@ class user_interface_server():
 
         # Esperamos a llegar al destino y estabilizarnos, las tolerancias aqui son mas finas
         t=0
-        while not (abs(self.pose[0] - waypoint[0])<0.3 and abs(self.pose[1] - waypoint[1])<0.3 and abs(self.pose[2] - waypoint[2])<0.5) and t<10:
-            if abs(self.pose[0] - goal[0])<0.3 and abs(self.pose[1] - goal[1])<0.3 and abs(self.pose[2] - goal[2])<0.5:
+        while not (abs(self.pose[0] - waypoint[0])<0.2 and abs(self.pose[1] - waypoint[1])<0.2 and abs(self.pose[2] - waypoint[2])<0.3) and t<10:
+            if abs(self.pose[0] - goal[0])<0.2 and abs(self.pose[1] - goal[1])<0.2 and abs(self.pose[2] - goal[2])<0.2
                 t=t+1
             else:
                 t=0
@@ -548,18 +576,6 @@ class user_interface_server():
             print("CENTRAL NODE: Incorrect command.")
             return False
 
-    def initial_lap(self):
-        print("CENTRAL NODE: Starting initial lap for localization convergence.")
-        # Este metodo debe hacer que el UAV se eleve unos metros y comience a navegar en bucle abierto, 
-        # usando unicamente el lidar para evitar obstaculos, hasta que la localizacion haya convergido.
-        # Aqui se plantean dos problematicas:
-        # - La primera es que debemos poder pilotar en bucle abierto, sin depender del valor de UAL/pose
-        #   porque este no habra convergido todavia. Los servicios de UAL NO FUNCIONARIAN CORRECTAMENTE
-        # - La segunda es que debemos poder saber cuando UAL/pose ha convergido. 
-        #   Podemos usar un servicio que sea llamado desde localizacion o analizar desde aqui los datos
-
-        print("CENTRAL NODE: Localization successful.")
-
 
 
     def start_server(self):
@@ -568,7 +584,6 @@ class user_interface_server():
         # IMPORTANTE:
         # antes de iniciar los servicios, debemos dar una vuelta sin objetivo claro
         # a fin de que la localizacion pueda converger
-        self.initial_lap()
         # Para esto, debemos navegar usando solo la informacion del lidar, buscando no chocarnos con nada
         print("CENTRAL NODE: User Interface ready.")
         rospy.spin()
