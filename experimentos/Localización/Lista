@@ -1,2 +1,13 @@
 Modelo base:
 q_alt = 5, q_gps = 1, r=0.5 (modelo), speed_cov_adj = 10
+Punto destino: [-3,2,3]
+
+En la mu:
+- [x,y] usan modelo odom o T (bueno), medida GPS (buena)
+- [z] usa modelo odom o T (malo), medida altímetro (regular), medida GPS para actualizar (buena)
+- Velocidades usan modelo odom (bueno), y medida GPS para actualizar (malo)
+
+Para el modelo ya tenemos la covarianza de la odometría
+
+Experimentos: 
+Comparar con /ual/odom y /uav_ground_truth

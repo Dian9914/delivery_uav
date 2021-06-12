@@ -80,19 +80,22 @@ class Loc_KF:
         
 
         # sigma, Q_gps -> given by odom & sensors
+        # sigma is just initialized and its value comes directly from rtabmap_ros
         self.sigma = np.zeros([6,6])
         #self.sigma_p = self.sigma
         self.sigma_p = np.zeros([6,6])
 
         # Q for altimeter
-        q_alt = 5
-        q_gps = 1
-        r = 0.5
-        speed_cov_adj = 10
+        q_alt = 0.1 # q_alt needs to be better than the model one
+        q_gps = 1 # q_gps is quite good
+        r = 0.5 # CURRENTLY NOT USED
+        speed_cov_adj = 10 # estimated speed by GPS is not that good either
 
         # Q for measurements
         #self.Q = np.diag(np.append(self.gps_cov_pos, self.gps_cov_vel)) # obtained GPS covariance
         self.Q = np.diag(q_gps*np.ones(6)) # our GPS covariance
+
+        # The altimeter has a different one
         self.Q[2,2] = q_alt
 
         # Speed covariance for GPS is higher
@@ -104,7 +107,7 @@ class Loc_KF:
         self.C = np.eye(6)
 
 
-        # extra for model covariance
+        # extra for model covariance --NOT USED--
         self.A = np.eye(6)
         self.R = np.diag(r*np.ones(6))
 
@@ -132,6 +135,9 @@ class Loc_KF:
         #self.sigma_p = np.linalg.multi_dot([self.A, self.sigma, np.transpose(self.A)]) + self.R # our covariance
         self.sigma_p = np.diag(self.odom_cov)
 
+        # Variante con T
+
+
     def KF_act(self):
         # Kt=sigma_p*C'*(C*sigma_p*C'+Q)^-1;
         #temp = np.matmul(self.C, np.matmul(self.sigma, np.transpose(self.C))) + self.Q
@@ -139,6 +145,10 @@ class Loc_KF:
         #self.Kt = np.matmul(np.matmul(self.sigma_p, np.transpose(self.C)), np.linalg.inv(temp))
 
         self.Kt = np.linalg.multi_dot([self.sigma_p, np.transpose(self.C), np.linalg.inv(temp)])
+        print("Kt filtro")
+        print(self.Kt)
+        print("") 
+
 
         #mu = mu_p + Kt*([Z(i,:) Z(i-1,:)]'-C*mu_p);
         #sigma = (eye(4)-Kt*C)*sigma_p; % cambia el eye aqui tambien
@@ -158,7 +168,7 @@ class Loc_KF:
         #print(self.sigma)
 
         # T result
-        print("Estimated T")
+        print("T estimada")
         print(self.T)
         print("")
         #print("Estimated point")

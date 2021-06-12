@@ -123,7 +123,7 @@
     </node>
 
     <!-- Para los resultados de los experimentos-->
-    <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui" output="screen" />
+    <!-- <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui" output="screen" /> -->
 
 
 </launch>
