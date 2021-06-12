@@ -8,6 +8,8 @@ import re
 import rospy
 from delivery_uav.srv import planner_srv
 from delivery_uav.msg import planner_route
+from visualization_msgs.msg import Marker
+from visualization_msgs.msg import MarkerArray
 import numpy as np
 from math import sqrt, pow
 
@@ -225,7 +227,7 @@ class Planner:
         # luego ese punto pasa a ser el siguiente y asi sucesivamente
         if meta==1:
             path = [] # vector con los puntos por los que pasaremos
-        
+            
             # mientras que 
             while self.celda_actual.punto != start_cell_map:
                 path.append(self.celda_actual.punto) # meto el punto actual
@@ -248,21 +250,59 @@ class Planner:
                 response.path.append(path[ii][0])
                 response.path.append(path[ii][1])
                 response.path.append(path[ii][2])
+                    #Caracteristicas del la trayectoria para rviz
+                marker = Marker()
+                marker.header.frame_id = "/map"
+                marker.type = marker.SPHERE
+                marker.action = marker.ADD
+                marker.scale.x = 0.2
+                marker.scale.y = 0.2
+                marker.scale.z = 0.2
+                marker.color.a = 1.0
+                marker.color.r = 1.0
+                marker.color.g = 1.0
+                marker.color.b = 0.0
+                marker.pose.orientation.w = 1.0
+                #Fin configuracion rviz
+                marker.pose.position.x=path[ii][0]
+                marker.pose.position.y=path[ii][1]
+                marker.pose.position.z=path[ii][2]
+                markerArray.markers.append(marker)
+            id = 0
+            for m in markerArray.markers:
+                m.id = id
+                id += 1
             
+            bandera=1
+            response.path.append(goal[0])
+            response.path.append(goal[1])
+            response.path.append(goal[2])
+
+        
+
         else:
             response=planner_srv._response_class()
             response=[0,0,3]
+        
         return response
 
         
             
     def empezar(self):
-        rospy.init_node('robot_planner', anonymous=True)
+        rospy.init_node('robot_planner', anonymous=True) 
         s=rospy.Service('/del_uav/planner',planner_srv, self.compute_path)
-        rospy.spin()
+        rate=rospy.Rate(0.2)
+        while not rospy.is_shutdown():
+            w.publish(markerArray)
+            rate.sleep()
+        
+        #rospy.spin()
         
 if __name__ == '__main__':
    try:
+        bandera=0
+        markerArray=MarkerArray()
+        w=rospy.Publisher('/del_uav/path',MarkerArray,queue_size=10)
         x = Planner() # crea el objeto del tipo Planner con todas las funciones
         x.empezar()
         exit()
