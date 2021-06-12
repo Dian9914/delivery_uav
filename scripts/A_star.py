@@ -238,19 +238,19 @@ class Planner:
 
                 # por ultimo, la lista de puntos a seguir sera la inversa de la obtenida
             path.reverse()
-            #for i in range(len(path)):
-             #path[i] = [(path[i][0]-self.offsX)*0.3,(self.offsY-path[i][1])*0.3]
+            for i in range(len(path)):
+                path[i] = [round(((path[i][0]-self.offsX)*0.3),2),round(((self.offsY-path[i][1])*0.3),2)]
             print(path)
             print(goal_cell_map)
-            response=planner_route()
+            response=planner_srv._response_class()
             for ii in range(0,len(path)):
                 path[ii].append(3)
-                response.point.append(path[ii])
-
+                response.path.append(path[ii][0])
+                response.path.append(path[ii][1])
+                response.path.append(path[ii][2])
             
         else:
-            
-            response=planner_route()
+            response=planner_srv._response_class()
             response=[0,0,3]
         return response
 

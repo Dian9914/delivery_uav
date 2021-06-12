@@ -4,14 +4,14 @@ import rospy
 from delivery_uav.msg import planner_route, waypoint
 from delivery_uav.srv import planner_srv, user_interface
 
-response = planner_srv._request_class()
+response = planner_srv._response_class()
 request = user_interface._request_class()
 
-response.goal=[1,2,3]
+
+
 
 print response
-print response.goal[1]
-
+print response.route.point
 
 print request
 print request.user_cmd.goal.xyz

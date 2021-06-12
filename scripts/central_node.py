@@ -197,7 +197,10 @@ class user_interface_server():
         else:
             print('AUTO MODE [CN]: Succesfull Planner service call.')
 
-        self.trayectory = response
+        self.trayectory = []
+        for i in range(0,len(response),3):
+            self.trayectory.append([response[i],response[i+1],response[i+2]])
+
         # IMPORTANTE:
         # COMO NO DISPONEMOS DE PLANNER, SUMINISTRAMOS UNA TRAYECTORIA INVENTADA
         '''self.trayectory = [[-1,-1,3],[-2,-2,3],[-2,-2,4],[-3,-3,4],[-4,-4,4],[-3,-3,4],[-2,-2,4],[-2,-2,3],[-2,-3,3]]'''
