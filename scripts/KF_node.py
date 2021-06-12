@@ -6,7 +6,9 @@ from geometry_msgs.msg import Pose, PoseStamped, Twist, Point, Vector3, Transfor
 from nav_msgs.msg import Odometry
 from mavros_msgs.msg import Altitude
 from delivery_uav.srv import goto_srv
+from rtabmap_ros.srv import ResetPose
 from delivery_uav.msg import sigma_value
+from uav_abstraction_layer.msg import State
 import open3d as o3d
 import numpy as np # numpy general
 from open3d_ros_helper import open3d_ros_helper as orh # open3d ros helper, funciones para facilitarnos la vida
@@ -14,6 +16,8 @@ import copy
 import timeit
 
 from rtabmap_ros.msg import OdomInfo
+
+from service_client import service_client
 
 class Loc_KF:
     def __init__(self):
@@ -23,6 +27,12 @@ class Loc_KF:
             #sim_origin.append(1.0)
         else:
             sim_origin = np.asarray([0.0, 0.0, 0.0])
+
+        sim_origin = np.asarray([0.0, 0.0, 3.0])
+        ual_sub = rospy.Subscriber("/ual/state", State, self.ual_callback)
+        self.KF_start = False
+        self.reset_icp = service_client("/reset_odom_to_pose", ResetPose)
+        self.reset_trigger = False
 
         # Flags for initial measurements
         self.odom_ok = False
@@ -86,8 +96,8 @@ class Loc_KF:
         self.sigma_p = np.zeros([6,6])
 
         # Q for altimeter
-        q_alt = 0.1 # q_alt needs to be better than the model one
-        q_gps = 1 # q_gps is quite good
+        q_alt = 1E-6 # q_alt needs to be better than the model and GPS one, nearly doesn't take into account ICP Z prediction (bad)
+        q_gps = 1E-2 # q_gps is quite good, 1E-4 for working KF, more for better prediction of real position
         r = 0.5 # CURRENTLY NOT USED
         speed_cov_adj = 10 # estimated speed by GPS is not that good either
 
@@ -123,12 +133,12 @@ class Loc_KF:
 
     def KF_pred(self):
         # La mu predicha es la de la odometria, que tiene deriva que vamos a corregir
-        #self.mu_p = self.odom_data
+        self.mu_p = self.odom_data
 
         # Variante con T
-        self.mu_p = np.matmul(self.T, np.append(self.odom_data[0:3],1))
-        self.mu_p = np.delete(self.mu_p, 3)
-        self.mu_p = np.append(self.mu_p, self.odom_data[3:6])
+        #self.mu_p = np.matmul(self.T, np.append(self.mu[0:3],1))
+        #self.mu_p = np.delete(self.mu_p, 3)
+        #self.mu_p = np.append(self.mu_p, self.odom_data[3:6])
 
 
         #self.sigma_p = np.diag(np.append(self.odom_cov_pos, self.odom_cov_vel))
@@ -161,16 +171,18 @@ class Loc_KF:
         print(self.mu)
         print("")     
 
-        #print("Datos odometria")
-        #print(self.odom_data)
+        print("Datos GPS")
+        print(self.Z)
+        print("")
 
         #print("Sigma estimada")
         #print(self.sigma)
+        #print("")
 
         # T result
-        print("T estimada")
-        print(self.T)
-        print("")
+        #print("T estimada")
+        #print(self.T)
+        #print("")
         #print("Estimated point")
 
         # Result publishing
@@ -224,7 +236,36 @@ class Loc_KF:
         
     def T_callback(self, data):
         self.T = orh.msg_to_se3(data.transform)
+
+    #def get_KF_start(self):
+        #return self.KF_start
         
+
+    def ual_callback(self, data):
+        if data.state == 3: # si el UAV esta despegando
+            threshold = 0.7
+            # comprobacion de que el ICP da medida correcta (para la X)
+            icp_err = abs(self.odom_data[0] - self.Z[0])
+            if (icp_err > threshold):
+                print(" ------------ ICP, error detectado ---------------")
+                # tengo que generar el mensaje
+                reset_icp_msg = ResetPose._request_class()
+                reset_icp_msg.x = self.Z[0]
+                reset_icp_msg.y = self.Z[1]
+                reset_icp_msg.z = self.Z[2]
+                reset_icp_msg.roll = 0.0
+                reset_icp_msg.pitch = 0.0
+                reset_icp_msg.yaw = 0.0
+                self.reset_icp.single_response(reset_icp_msg)
+                self.reset_trigger = True
+            else:
+                print("ICP funciona OK")
+
+            print(self.reset_trigger)
+            #self.KF_start = True
+            #response = self.reset_icp.single_response(#mensaje)
+
+
 
 
 if __name__ == '__main__':
@@ -237,9 +278,11 @@ if __name__ == '__main__':
         rate = rospy.Rate(30) # 30 Hz es la frecuencia de UAL
 
         while not rospy.is_shutdown():
+            #if obj.get_KF_start() == True:
             obj.KF_pred()
             obj.Z_upd()
             obj.KF_act()
+            
             rate.sleep()
 
         #obj.ICP_location()

@@ -11,3 +11,17 @@ Para el modelo ya tenemos la covarianza de la odometría
 
 Experimentos: 
 Comparar con /ual/odom y /uav_ground_truth
+
+Sin T, 
+Observar Kt entre 0.2 y 0.8
+Las covarianzas de ICP están alrededor de 5E-5
+con q_alt = 1E-6 toma la Z de la medida directamente
+con q_gps = 1E-4 va bien
+con q_gps = 1E-6 es ruidoso (sólo GPS) y se parece más a UAL
+
+La idea del GPS es corregir la deriva, pero para estos errores tan grandes no lo haria bien
+
+la sigma da de media un 3e-5 y no pasa de 5e-5, excepto cuando en ese instante 
+no logra hacer icp
+Si hay muchos fallos al hacer icp, se deriva la medida de la misma forma que las veces
+cuando al despegar la x,y se va fuera
