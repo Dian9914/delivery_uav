@@ -47,14 +47,18 @@ class Planner:
 
         # Cargamos el mapa en la variable self.map, que es una matriz de 0 y 1, con 1 identificando al obstaculo
         # El mapa tiene 20 unidades en X y 16 unidades en Y, con origen de coordenadas en la esquina superior izquierda
-        imagen = self.read_pgm("mapa1.pgm", byteorder='<')
+        if rospy.has_param('~k_seguridad'):
+            k_seguridad = rospy.get_param('~k_seguridad')
+        else:
+            k_seguridad = 3
+        imagen = self.read_pgm("mapa3.pgm", byteorder='<')
         self.map=np.zeros((166,166))
         self.map[imagen==254]=254
         #Anadimos seguridad 
         for i in range(10,150,1) :
             for j in range(10,150,1):
                 if imagen[i,j]!=254:
-                    for k in range(3):
+                    for k in range(k_seguridad):
                         self.map[i+k,j]=0
                         self.map[i+k,j+k]=0
                         self.map[i,j+k]=0
@@ -273,10 +277,6 @@ class Planner:
                 m.id = id
                 id += 1
             
-            bandera=1
-            response.path.append(goal[0])
-            response.path.append(goal[1])
-            response.path.append(goal[2])
 
         
 

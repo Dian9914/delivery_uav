@@ -6,6 +6,7 @@ Created on Sun May 23 12:20:08 2021
 """
 import re
 import rospy
+import time
 from delivery_uav.srv import planner_srv
 from delivery_uav.msg import planner_route
 from visualization_msgs.msg import Marker
@@ -44,21 +45,30 @@ class Planner:
                             offset=len(header)
                             ).reshape((int(height), int(width)))
     def __init__(self):
-
-        # Cargamos el mapa en la variable self.map, que es una matriz de 0 y 1, con 1 identificando al obstaculo
-        # El mapa tiene 20 unidades en X y 16 unidades en Y, con origen de coordenadas en la esquina superior izquierda
-        imagen0 = self.read_pgm("mapa0.pgm", byteorder='<')
-        imagen3 = self.read_pgm("mapa3.pgm", byteorder='<')
-        imagen6 = self.read_pgm("mapa6.pgm", byteorder='<')
-        self.map=np.zeros((166,166,8))
-        self.map[imagen0==254,1]=254
+        self.inicio=time.time()
+        # Empezamos comprobando si hemos cambiado el valor de k_seguridad y en caso contrario utilizamos el valor por defecto
+        if rospy.has_param('~k_seguridad'):
+            k_seguridad = rospy.get_param('~k_seguridad')
+        else:
+            k_seguridad = 3
+        # Leemos los tres mapas que vamos a utilizar para formar el voxelgrid
+        imagen0 = self.read_pgm("mapa0_0.5.pgm", byteorder='<')
+        imagen3 = self.read_pgm("mapa3_0.5.pgm", byteorder='<')
+        imagen6 = self.read_pgm("mapa6_0.5.pgm", byteorder='<')
+        #Generamos una matriz de ceros donde guardaremos el mapa
+        self.map=np.zeros((100,100,8))
+        #Ahora comprobamos los mapas leidos y en caso de que alguna coordenada este libre(254) se copia en nuestro mapa, esto lo
+        #hacemos utilizando el mapa 0 para las alturas 0 y 1 metro, el mapa 3 para 2,3 y 4 y el mapa 6 para la 5 y 6, con esto 
+        #se consigue 1 metro aproximado de distancia de seguridad en Z
+        self.map[imagen0==254,0:2]=254
         self.map[imagen3==254,2:5]=254
         self.map[imagen0==254,5:7]=254
-        #Anadimos seguridad 
-        for i in range(10,150,1) :
-            for j in range(10,150,1):
+        #Ahora vamos a anadir la distancia de seguridad en X e Y, para ello vamos a iterar por las diferentes alturas de la matriz
+        #en caso de que algun voxel sea un obstaculo se maracara como obstaculo todos sus abyacentes en un rango de K_seguridad
+        for i in range(5,95,1) :
+            for j in range(5,95,1):
                 if imagen0[i,j]!=254:
-                    for k in range(3):
+                    for k in range(k_seguridad):
                             self.map[i+k,j,0:2]=0
                             self.map[i+k,j+k,0:2]=0
                             self.map[i,j+k,0:2]=0
@@ -66,12 +76,9 @@ class Planner:
                             self.map[i-k,j-k,0:2]=0
                             self.map[i,j-k,0:2]=0
                             self.map[i-k,j+k,0:2]=0
-                            self.map[i+k,j-k,0:2]=0
-                else:
-                    self.map[i,j,0:2]=254
-                    
+                            self.map[i+k,j-k,0:2]=0                    
                 if imagen3[i,j]!=254:
-                    for k in range(3):
+                    for k in range(k_seguridad):
                         self.map[i+k,j,2:6]=0
                         self.map[i+k,j+k,2:5]=0
                         self.map[i,j+k,2:5]=0
@@ -79,11 +86,9 @@ class Planner:
                         self.map[i-k,j-k,2:5]=0
                         self.map[i,j-k,2:5]=0
                         self.map[i-k,j+k,2:5]=0
-                        self.map[i+k,j-k,2:5]=0
-                else:
-                    self.map[i,j,2:5]=254
+                        self.map[i+k,j-k,2:5]=0        
                 if imagen6[i,j]!=254:
-                    for k in range(3):
+                    for k in range(k_seguridad):
                         self.map[i+k,j,5:7]=0
                         self.map[i+k,j+k,5:7]=0
                         self.map[i,j+k,5:7]=0
@@ -92,29 +97,27 @@ class Planner:
                         self.map[i,j-k,5:7]=0
                         self.map[i-k,j+k,5:7]=0
                         self.map[i+k,j-k,5:7]=0
-                else:
-                    self.map[i,j,5:7]=254
-        self.height = 166
-        self.width = 166
-        self.resolution = 0.3
+            
+        self.height = 100
+        self.width = 100
+        self.resolution = 0.5
         
     def euclidean_distance(self, posicion_actual, posicion_final):
-        """Distancia euclidea entre posicion actual y final"""
-        """Se calcula mediante las coordenadas x e y de los puntos, y obteniendo la hipotenusa del triangulo resultante"""
+        #Distancia euclidea entre posicion actual y final
+        #Se calcula mediante las coordenadas x e y de los puntos, y obteniendo la hipotenusa del triangulo resultante
         return sqrt(pow((posicion_final[0] - posicion_actual[0]), 2) +
                     pow((posicion_final[1] - posicion_actual[1]), 2) +
                     pow((posicion_final[2] - posicion_actual[2]),2))
 
     def manhattan_distance(self, node_initial, node_final):
-        """Distancia Manhattan: Se define como la suma de la distancia en X y la distancia en Y
-            entre los dos nodos"""
+        #Distancia Manhattan: Se define como la suma de la distancia en X, la distancia en Y y la distancia en Z entre los dos nodos
         return (abs(node_final[0]-node_initial[0]) + abs(node_final[1]-node_initial[1])+abs(node_final[2]-node_initial[2]))
     
     def check_in_list(self, elemento, lista_b):
-        """Comprueba si un elemento del tipo lista (objeto) se encuentra dentro de un array de objetos lista.
-           Mediante un bucle recorremos la lista hasta encontrar una coincidencia, en ese caso devolvemos 1 y escribimos en 
-           variables globales el lugar de la lista donde lo ha encontrado y el elemento en si."""
-        for index in range(len(lista_b)): 
+        #Comprueba si un elemento del tipo lista (objeto) se encuentra dentro de un array de objetos lista.
+        #Mediante un bucle recorremos la lista hasta encontrar una coincidencia, en ese caso devolvemos 1 y escribimos en 
+        #variables globales el lugar de la lista donde lo ha encontrado y el elemento en si.
+        for index in range(len(lista_b)):
             if elemento.punto == lista_b[index].punto:
                 self.index_found = index
                 self.elemento_found = lista_b[index]
@@ -138,8 +141,9 @@ class Planner:
         self.index_found = 0
         self.elemento_found = lista()
         
-        self.offsX=83
-        self.offsY=83
+        #Valores de offset, depende del tamano del mapa y de la posicion inicial que queramos
+        self.offsX=50
+        self.offsY=50
         
         start=data.start.xyz
         goal=data.goal.xyz
@@ -147,36 +151,34 @@ class Planner:
         # Paso previo: Es necesario hacer un cambio de coordenadas, dado que el mapa procesado tiene su origen en el elemento 
         # arriba a la izquierda y en el simulador, el origen de coordenadas es en el centro
         # Se ha obtenido que:
-        start_cell_map = [int(round(start[0]/0.3)+self.offsX), int(self.offsY-round(start[1]/0.3)),int(start[2])] 
-        goal_cell_map = [int(round(goal[0]/0.3)+self.offsX), int(self.offsY-round(goal[1]/0.3)),int(goal[2])]
+        start_cell_map = [int(round(start[0]/0.5)+self.offsX), int(self.offsY-round(start[1]/0.5)),int(start[2])] 
+        goal_cell_map = [int(round(goal[0]/0.5)+self.offsX), int(self.offsY-round(goal[1]/0.5)),int(goal[2])]
          # Paso 0: Determinamos los atributos de la celda actual y se introduce el punto en la lista abierta
         self.celda_actual.punto = [start_cell_map[0],start_cell_map[1],start_cell_map[2]]
         self.celda_actual.padre = [start_cell_map[0],start_cell_map[1],start_cell_map[2]]
-        self.celda_actual.h = self.manhattan_distance(start_cell_map, goal_cell_map)
+        self.celda_actual.h = self.euclidean_distance(start_cell_map, goal_cell_map)
         self.celda_actual.f = self.celda_actual.h
         self.lista_abierta.append(self.celda_actual) # append nos permite introducir elementos en vectores
-        #Miramos si el punto es valido
+        #Miramos si el punto de destino es valido
         if (self.map[goal_cell_map[1],goal_cell_map[0],goal_cell_map[2]]==254):
             meta=1
+            print('PLANNER: PLANNING PATHING, THIS MAY TAKE A WHILE')
         else:
             meta=0
-            print('Este punto no es valido')
-
-
-        print(self.lista_abierta[0].punto)
-        print(meta)
-        while meta==1 and not  self.lista_abierta==[]:
+            print('PLANNER_ERROR: GOAL' + goal + ' IS NOT A VALID POINT, PLEASE TRY AGAIN')
+        #En caso de ser valido y mientras la lista abierta no este vacia iteramos
+        while meta==1 and not self.lista_abierta==[]:
             # Paso 1: Sacar el primer elemento de la lista abierta, y meterlo en la cerrada
             # El primer elemento de la lista abierta sera aquel de menor f (coste)
-            self.lista_cerrada.append(self.lista_abierta[0])  #AQUI DIo ERROR
+            self.lista_cerrada.append(self.lista_abierta[0])  
             self.celda_actual = self.lista_abierta[0]
             self.lista_abierta.pop(0)  # pop nos permite eliminar una fila de un array
-            print('paso1')
-            print(self.celda_actual.punto)
+            
+            
             # Paso 2: Comprobar si el punto que se esta procesando es el destino
             if (self.celda_actual.punto == [goal_cell_map[0],goal_cell_map[1],goal_cell_map[2]]): break  # me salgo del bucle
 
-            print('paso2')
+            
             # Paso 3: Calcular celdas vecinas a la actual              
             # definir vector vecinos y vecinos filtrados (alternativa, usar clear)
             # Consideracion: Los vecinos diagonales no se cuentan
@@ -186,7 +188,7 @@ class Planner:
             for index in range(26):
                 lista_vecinos.append(lista())
 
-            # calculamos los vecinos como los adyacentes 
+            # calculamos los vecinos como los adyacentes
             lista_vecinos[0].punto = [self.celda_actual.punto[0]+1, self.celda_actual.punto[1]  ,self.celda_actual.punto[2]]
             lista_vecinos[1].punto = [self.celda_actual.punto[0],   self.celda_actual.punto[1]+1 ,self.celda_actual.punto[2]]
             lista_vecinos[2].punto = [self.celda_actual.punto[0]-1, self.celda_actual.punto[1]   ,self.celda_actual.punto[2]]
@@ -219,7 +221,7 @@ class Planner:
             
             lista_vecinos[24].punto = [self.celda_actual.punto[0], self.celda_actual.punto[1],self.celda_actual.punto[2]+1]
             lista_vecinos[25].punto = [self.celda_actual.punto[0], self.celda_actual.punto[1] ,self.celda_actual.punto[2]-1]
-            #print('paso3')
+            
             # Paso 4.1: Filtrado de vecinos
             i=0
             # para cada vecino
@@ -236,19 +238,17 @@ class Planner:
                 else:
                     lista_vecinos.pop(i)
                     i=i-1
-                    print('obstaculo') 
 
                 # pasamos al siguiente elemento
                 i=i+1
             # lista_vecinos ahora contiene los vecinos que van a ser procesados
-            #print('paso41')
             # Paso 4.2: Procesado de vecinos
             # Para cada vecino... (bucle autoindexado)
             for point in lista_vecinos:
                 # Calculo el coste g(n) nuevo, que sera el coste g de la celda actual mas la distancia Manhattan
                 # entre la celda actual y la celda vecina (por los vecinos elegidos, siempre va a valer 1, porque de la celda actual a la vecina siempre
                 # hay 1 de distancia)
-                costeNuevo = self.celda_actual.g + self.manhattan_distance(self.celda_actual.punto, 
+                costeNuevo = self.celda_actual.g + self.euclidean_distance(self.celda_actual.punto, 
                                                                          point.punto)
                 # Comprobamos si el punto se encuentra ya en la lista abierta
                 temp = self.check_in_list(point, self.lista_abierta)
@@ -257,7 +257,7 @@ class Planner:
                 # o que el punto no se encuentra en la lista abierta
                 if ((costeNuevo < self.elemento_found.g) or (temp == 0)):
                     # calculamos los parametros del punto
-                    point.h = self.manhattan_distance(point.punto, [goal_cell_map[0],goal_cell_map[1],goal_cell_map[2]])
+                    point.h = self.euclidean_distance(point.punto, [goal_cell_map[0],goal_cell_map[1],goal_cell_map[2]])
                     point.g = costeNuevo
                     point.f = point.h + point.g
                     point.padre = self.celda_actual.punto
@@ -269,13 +269,11 @@ class Planner:
                     else:  
                         # si no actualizamos los valores para el punto de la lista abierta
                         self.lista_abierta[self.index_found] = point
-                        print('nuevo valor lista abierta')
 
             #print('paso42')
             # Paso 5: Ordenar la lista abierta
             # Buscaremos ordenarla por el valor de f de menor a mayor. En caso de empate se coge el valor de h
             self.lista_abierta.sort(key=lambda var: (var.f, var.h)) 
-            print('paso5') 
             #print(self.lista_abierta)
         ## --FIN DEL BUCLE--
         # Paso 6: ahora tenemos que obtener los puntos de forma regresiva
@@ -297,45 +295,41 @@ class Planner:
                 # por ultimo, la lista de puntos a seguir sera la inversa de la obtenida
             path.reverse()
             for i in range(len(path)):
-                path[i] = [round(((path[i][0]-self.offsX)*0.3),2),round(((self.offsY-path[i][1])*0.3),2),round(path[i][2],2)]
-            print(path)
-            print(goal_cell_map)
+                path[i] = [round(((path[i][0]-self.offsX)*0.5),2),round(((self.offsY-path[i][1])*0.5),2),round(path[i][2],2)]
+            
             response=planner_srv._response_class()
-            #for i in range(len(markerArray))
-            #    markerArray.markers.pop(0)
             for ii in range(0,len(path)):
                 response.path.append(path[ii][0])
                 response.path.append(path[ii][1])
                 response.path.append(path[ii][2])
-                 #Caracteristicas del la trayectoria para rviz
+                #Caracteristicas del la trayectoria para representarla en rviz
                 marker = Marker()
                 marker.header.frame_id = "/map"
                 marker.type = marker.SPHERE
                 marker.action = marker.ADD
-                marker.scale.x = 0.2
-                marker.scale.y = 0.2
-                marker.scale.z = 0.2
+                marker.scale.x = 0.4
+                marker.scale.y = 0.4
+                marker.scale.z = 0.4
                 marker.color.a = 1.0
                 marker.color.r = 1.0
-                marker.color.g = 1.0
+                marker.color.g = 0.0
                 marker.color.b = 0.0
                 marker.pose.orientation.w = 1.0
-                #Fin configuracion rviz
+                
                 marker.pose.position.x=path[ii][0]
                 marker.pose.position.y=path[ii][1]
                 marker.pose.position.z=path[ii][2]
                 markerArray.markers.append(marker)
+                #Fin configuracion rviz
             id = 0
             for m in markerArray.markers:
                 m.id = id
                 id += 1
-            bandera=1
-            response.path.append(goal[0])
-            response.path.append(goal[1])
-            response.path.append(goal[2])
-        else:
-            response=planner_srv._response_class()
-            response=[0,0,3]
+            
+        
+        self.final=time.time()
+        print('PLANNER: PATHING COMPLETED, IT HAS TAKEN:' + str(round(self.final-self.inicio,2)) + ' SECONDS')
+        
         return response
 
         
@@ -346,7 +340,7 @@ class Planner:
         rate=rospy.Rate(0.2)
         while not rospy.is_shutdown():
             
-            w.publish(markerArray)
+            w.publish(markerArray)#Publico el markerArray para que rviz me represente la trayectoria
             rate.sleep()
 
         #rospy.spin()

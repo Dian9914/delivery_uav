@@ -23,7 +23,7 @@ class user_interface_server():
             sim_origin = rospy.get_param('~sim_origin')
             #sim_origin.append(1.0)
         else:
-            sim_origin = [0.0, 0.0, 0.0]
+            sim_origin = [1.0, 1.0, 0.0]
 
         self.home = [sim_origin[0], sim_origin[1], 3.0]   #punto "casa" que consideramos nuestra posicion inicial
         self.trayectory = []        #matriz donde se guardara la trayectoria dada por el planner
