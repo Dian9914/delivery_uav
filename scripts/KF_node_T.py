@@ -97,7 +97,7 @@ class Loc_KF:
 
         # Q for altimeter
         q_alt = 1E-6 # q_alt needs to be better than the model and GPS one, nearly doesn't take into account ICP Z prediction (bad)
-        q_gps = 1E-3 # q_gps is quite good, 1E-4 for working KF, more for better prediction of real position
+        q_gps = 3E-4 # q_gps is quite good, 1E-4 for working KF, more for better prediction of real position
         r = 1E-5 # Covariance for the model
         #speed_cov_adj = 10 # estimated speed by GPS is not that good either
 
