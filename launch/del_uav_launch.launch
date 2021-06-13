@@ -1,4 +1,3 @@
-
 <launch>
 
     <arg name="ns_prefix" default="uav_"/>
@@ -9,27 +8,23 @@
     <arg name="mode" default="sitl"/>
     <arg name="robot_model" default="mbzirc"/>
 
-    <arg name="pose_frame_id" default=""/><!-- To publish ual/pose in other frame than local, e.g. map -->
+    <arg name="pose_frame_id" default="map"/><!-- To publish ual/pose in other frame than local, e.g. map -->
     <arg name="mavros_offboard_rate" default="30.0"/>
     <arg name="position_th" default="0.33"/>
     <arg name="orientation_th" default="0.65"/>
     <arg name="hold_pose_time" default="3.0"/>
 
-    <!-- <arg name="model_name" default="mbzirc"/> -->
-	<arg name="description_package" default="delivery_uav"/>
-
-	<!-- robot_description for rviz -->
-	<param name="robot_description"
-	       command="$(eval 'xacro --inorder ' + find(description_package) + '/models/' + robot_model + '/model.xacro')"/>
-    <arg name="map_name" default="Lab_sinpalo_semimuros.world"/>
-    
+    <!-- initial spawn pose for the uav-->
+    <arg name="initial_x" default="0.0"/>
+    <arg name="initial_y" default="0.0"/>
+    <arg name="initial_z" default="0.0"/>
 
     <group if="$(eval mode=='sitl')">
         <!-- Launch Gazebo simulation -->
         <rosparam param="/use_sim_time">true</rosparam>
         <node pkg="px4_bringup" type="launch_gzworld.py" name="gazebo_world" output="screen"
-        args="-physics=ode -world=$(find delivery_uav)/worlds/$(arg map_name) -description_package=delivery_uav">
-            <rosparam param="sim_origin">[0, 0, 0]</rosparam><!-- [lat,lon,alt] -->
+        args="-physics=ode -world=$(find delivery_uav)/worlds/Lab_sinpalo_semimuros.world -description_package=delivery_uav">
+            <rosparam param="sim_origin">[37.558542, -5.931074, 7.89]</rosparam><!-- [lat,lon,alt] -->
         </node>
     </group>
 
@@ -44,9 +39,9 @@
         <arg name="id" value="1"/>
         <arg name="material" value="Orange"/>
         <arg name="mode" value="$(arg mode)"/>
-        <arg name="x" value="0"/>
-        <arg name="y" value="0"/>
-        <arg name="z" value="0"/>
+        <arg name="x" value="$(arg initial_x)"/>
+        <arg name="y" value="$(arg initial_y)"/>
+        <arg name="z" value="$(arg initial_z)"/>
         <arg name="yaw" value="0"/>
         <arg name="robot_model" value="$(arg robot_model)"/>
     </include>
@@ -73,45 +68,34 @@
     <!-- debug con RViz-->
     <include file="$(find delivery_uav)/launch/visualize.launch">
         <arg name="load_map" value="1"/>
-        <arg name="map_name" value="lab2.yaml"/>
+        <arg name="map_name" value="mapa1.yaml"/>
     </include>
 
-
-
-
-	<!-- es necesario llamar a joint_state_publisher y robot_state_publisher para el ICP-->
-<!-- 	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
-		<param name="use_gui" value="false"/>
-	</node>
-	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/> -->
-
-    <!-- Algunos nodos permaneceran deshabilitados para los experimentos de localizacion -->
-    <!-- iniciamos el nodo del gripper -->
-    <node pkg="delivery_uav" type="gripper_node.py" name="gripper" output="screen" />
-
     <!-- iniciamos el nodo central -->
-    <!-- <node pkg="delivery_uav" type="central_node.py" name="central" output="screen" /> -->
+    <node pkg="delivery_uav" type="central_node.py" name="central" output="screen" >
+        <!-- posicion inicial del UAV -->
+        <rosparam param="sim_origin">[0.0, 0.0, 0.0]</rosparam><!-- [X,Y,Z] -->
+    </node>
 
-    <!-- iniciamos el nodo del controlador -->
-    <!-- <node pkg="delivery_uav" type="controller_node.py" name="control" output="screen" /> -->
+    <!-- iniciamos el nodo del localizador -->
+    <node pkg="delivery_uav" type="KF_node.py" name="localization" output="screen" >
+        <!-- posicion inicial del UAV -->
+        <rosparam param="sim_origin">[0.0, 0.0, 0.0]</rosparam><!-- [X,Y,Z] -->
+    </node>
 
-    <!-- iniciamos el nodo de localizacion -->
-    <!-- <node pkg="delivery_uav" type="KF_node_T.py" name="localization" output="screen" /> -->
-
-
-    <!-- iniciamos el nodo encargado de la odometria usando lidar -->
-        <!-- ejecutar en consola:
-        rosrun rtabmap_ros icp_odometry - -params 
-        con las barritas juntas 
-        para tener lista de los parametros-->
-       
-<!--     <node pkg="rtabmap_ros" type="icp_odometry" name='icp_odometry' args="load rtabmap_ros/icp_odometry camera_nodelet_manager" output="log">
+        <!-- iniciamos el nodo encargado de la odometria usando lidar -->
+    <node pkg="rtabmap_ros" type="icp_odometry" name='icp_odometry' args="load rtabmap_ros/icp_odometry camera_nodelet_manager" output="screen">
         <remap from="scan_cloud"      to="/del_uav/uav_laser_scan"/>
 	  
         <param name="frame_id"        type="string" value="lidar_base"/>   
         <param name="scan_normal_k"   type="int" value="10"/>     
         <param name="scan_normal_radius"   type="int" value="0"/>   
 
+        <!-- ejecutar en consola:
+        rosrun rtabmap_ros icp_odometry - -params 
+        con las barritas juntas 
+        para tener lista de los parametros-->
+       
         <param name="Icp/PointToPlane"  type="string" value="true"/>
         <param name="Icp/VoxelSize"     type="string" value="0"/>
         <param name="Icp/PM"            type="string" value="false"/>
@@ -120,10 +104,18 @@
         <param name="Odom/ResetCountdown"  type="string" value="1"/>
         <param name="Reg/Strategy"  type="string" value="1"/>
         <param name="OdomF2M/BundleAdjustment"  type="string" value="0"/>
-    </node> -->
+    </node>
 
-    <!-- Para los resultados de los experimentos-->
-    <!-- <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui" output="screen" /> -->
+    <!-- iniciamos el nodo del controlador -->
+    <node pkg="delivery_uav" type="controller_node.py" name="control" output="screen" >
+    </node>
 
+    <!-- iniciamos el nodo del planificador -->
+    <node pkg="delivery_uav" type="A_star_3d.py" name="localization" output="screen" >
+    </node>
+
+    <!-- iniciamos el nodo del gripper -->
+    <node pkg="delivery_uav" type="gripper_node.py" name="gripper" output="screen" >
+    </node>
 
 </launch>
