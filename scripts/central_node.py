@@ -76,7 +76,7 @@ class user_interface_server():
         self.planner = service_client('/del_uav/planner',planner_srv)
 
     def ual_state_checker(self,data):
-        # método encargado de comprobar el estado de UAL
+        # metodo encargado de comprobar el estado de UAL
         # al leer el estado, comprobamos que el estado sea landed armed (2) para poder hacer start
         # o flying auto (4) para poder controlar
         if data.state==2 and self.ual_state==0:
@@ -206,7 +206,7 @@ class user_interface_server():
         #MODO AUTOMATICO: Principal modo de funcionamiento, el UAV se desplaza a un punto pedido
         print("AUTO MODE [CN]: Starting the auto mode. The goal set is [%.2f, %.2f, %.2f]."%(goal[0],goal[1],goal[2]))
 
-        # preparo el mensaje que le llegará al planner, con el punto de inicio 
+        # preparo el mensaje que le llegara al planner, con el punto de inicio 
         # y la meta
         request = planner_srv._request_class()
 
@@ -230,7 +230,7 @@ class user_interface_server():
         self.trayectory = []
         for i in range(0,len(response.path),6):
             self.trayectory.append([response.path[i],response.path[i+1],response.path[i+2]])
-        #el último punto siempre será la meta
+        #el ultimo punto siempre sera la meta
         self.trayectory.append([goal[0],goal[1],goal[2]])
 
         # En este caso vamos a llamar al mismo servicio de forma recurrente, por lo que es interesante usar una conexion persistente con el servicio
@@ -417,7 +417,7 @@ class user_interface_server():
 
     def UI_handler(self, req):
         # se ejecuta cada vez que se recibe una peticion al servicio de user interface
-        # se encarga de manejar la mayoria de locks y variables de condición para
+        # se encarga de manejar la mayoria de locks y variables de condicion para
         # asegurar que todos los modos son thread-safe
         if req.user_cmd.command=='start':
             print("CENTRAL NODE: Requested delivery UAV system start.")
@@ -598,7 +598,7 @@ class user_interface_server():
 
 if __name__ == "__main__":
     rospy.init_node('central_node')
-    # al llamar al constructor, el proceso se quedará esperando a todos los servicios
+    # al llamar al constructor, el proceso se quedara esperando a todos los servicios
     # necesarios para la operacion
     user_server = user_interface_server()
     # Esperamos a que el sistema este listo

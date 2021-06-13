@@ -72,7 +72,7 @@
     </include>
 
     <!-- iniciamos el nodo del localizador -->
-    <node pkg="delivery_uav" type="A_star.py" name="localization" output="screen" >
+    <node pkg="delivery_uav" type="A_star.py" name="planner" output="screen" >
     </node>
 
 

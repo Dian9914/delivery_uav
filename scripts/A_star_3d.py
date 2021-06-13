@@ -6,6 +6,7 @@ Created on Sun May 23 12:20:08 2021
 """
 import re
 import rospy
+import os
 from delivery_uav.srv import planner_srv
 from delivery_uav.msg import planner_route
 from visualization_msgs.msg import Marker
@@ -44,12 +45,12 @@ class Planner:
                             offset=len(header)
                             ).reshape((int(height), int(width)))
     def __init__(self):
-
+        ruta=os.path.dirname(os.path.abspath(__file__))
         # Cargamos el mapa en la variable self.map, que es una matriz de 0 y 1, con 1 identificando al obstaculo
         # El mapa tiene 20 unidades en X y 16 unidades en Y, con origen de coordenadas en la esquina superior izquierda
-        imagen0 = self.read_pgm("mapa0.pgm", byteorder='<')
-        imagen3 = self.read_pgm("mapa3.pgm", byteorder='<')
-        imagen6 = self.read_pgm("mapa6.pgm", byteorder='<')
+        imagen0 = self.read_pgm(ruta+"/../maps/mapa0.pgm", byteorder='<')
+        imagen3 = self.read_pgm(ruta+"/../maps/mapa3.pgm", byteorder='<')
+        imagen6 = self.read_pgm(ruta+"/../maps/mapa6.pgm", byteorder='<')
         self.map=np.zeros((166,166,8))
         self.map[imagen0==254,1]=254
         self.map[imagen3==254,2:5]=254
