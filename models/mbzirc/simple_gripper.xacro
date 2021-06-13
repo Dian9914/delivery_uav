@@ -142,7 +142,7 @@
         <parent link="gripper_palm"/>
         <child link="gripper_left_finger"/>
         <origin xyz="0.06 0 -0.09" rpy="0 0 0"/>
-            <limit lower="-1" upper="1" effort="10" velocity="3"/>
+            <limit lower="-1" upper="0.5" effort="10" velocity="3"/>
             <axis xyz="0 1 0"/>
      </joint>
 
@@ -150,7 +150,7 @@
         <parent link="gripper_palm"/>
         <child link="gripper_right_finger"/>
         <origin xyz="-0.06 0 -0.09" rpy="0 0 0"/>
-            <limit lower="-1" upper="1" effort="10" velocity="3"/>
+            <limit lower="-1" upper="0.5" effort="10" velocity="3"/>
             <axis xyz="0 -1 0"/>
      </joint>
 
@@ -177,5 +177,18 @@
       <topicName>/uav_right_force</topicName>
     </plugin>
   </gazebo>
+
+    <gazebo>
+        <gripper name="gripper_gazebo">
+            <grasp_check>
+                <attach_steps>5</attach_steps>
+                <detach_steps>10</detach_steps>
+                <min_contact_count>1</min_contact_count>
+            </grasp_check>
+            <gripper_link>gripper_left_tip</gripper_link>
+            <gripper_link>gripper_right_tip</gripper_link>
+            <palm_link>gripper_palm</palm_link>
+        </gripper>
+    </gazebo>
 
 </robot>
