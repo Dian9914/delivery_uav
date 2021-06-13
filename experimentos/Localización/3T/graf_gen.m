@@ -4,26 +4,44 @@ pos_y = csvread('pos_y.csv',1);
 
 i=1;
 
-% % encontrar donde esta el problema con los datos
-% while pos_x(i,3) ~= 0
-%     i=i+1;
-% end
-% 
-% % crear una nueva pos_x donde se tome el dato 0 para
-% pos_x_new = [];
-% 
-% size_i = i;
-% for j=1:size_i
-%     pos_x_new(i,:) = [pos_x(i,1) pos_x(i,2) pos_x (
-% 
-% end
-
+% encontrar donde esta el problema con los datos
+while pos_x(i,4) ~= 0
+    i=i+1;
+end
+ground_truth = [pos_x(:,1) pos_x(:,2)];
+KF_pose = [pos_x(1:i-1,3) pos_x(1:i-1,4)];
+UAL_pose = [pos_x(1:i-2,5) pos_x(1:i-2,6)];
 
 figure(1)
-plot(pos_x(:,1),[pos_x(:,2) pos_x(:,3) pos_x(:,4)]);
-title("Posición X del UAV")
+plot(ground_truth(:,1),ground_truth(:,2));
 grid; xlabel("Tiempo [s]"); ylabel("Coordenada [m]");
+
+hold on 
+plot(KF_pose(:,1),KF_pose(:,2))
+plot(UAL_pose(:,1),UAL_pose(:,2))
+hold off
 legend("Posición real","Posición KF", "Posición UAL");
+
+
+
+
+return
+% figure(1)
+% plot(pos_x(:,1),[pos_x(:,2) pos_x(:,3) pos_x(:,4)]);
+% title("Posición X del UAV")
+% grid; xlabel("Tiempo [s]"); ylabel("Coordenada [m]");
+% legend("Posición real","Posición KF", "Posición UAL");
+
+figure(1)
+plot(pos_x(:,1),pos_x(:,2))
+grid; xlabel("Tiempo [s]"); ylabel("Coordenada [m]");
+
+hold on 
+plot(pos_x(:,3),pos_x(:,4))
+plot(pos_x(:,5),pos_x(:,6))
+hold off
+legend("Posición real","Posición KF", "Posición UAL");
+
 
 return
 figure(2)

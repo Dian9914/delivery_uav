@@ -84,7 +84,7 @@ class Loc_KF:
 
         # Defined covariance parameters for KF
         q_alt = 1E-6 # q_alt needs to be better than the model and GPS one, nearly doesn't take into account ICP Z prediction (bad)
-        q_gps = 1E-2 # q_gps is quite good, 1E-4 for working KF, higher for better prediction of real position with ICP
+        q_gps = 4E-4 # q_gps is quite good, 1E-4 for working KF, higher for better prediction of real position with ICP
         speed_cov_adj = 10 # estimated speed by GPS is not that good either
 
         # construct Q matrix from q covariances (GPS doesn't provide us with valid values)
