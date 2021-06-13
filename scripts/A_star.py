@@ -48,7 +48,7 @@ class Planner:
         ruta=os.path.dirname(os.path.abspath(__file__))
         # Cargamos el mapa en la variable self.map, que es una matriz de 0 y 1, con 1 identificando al obstaculo
         # El mapa tiene 20 unidades en X y 16 unidades en Y, con origen de coordenadas en la esquina superior izquierda
-        imagen = self.read_pgm("/../maps/mapa1.pgm", byteorder='<')
+        imagen = self.read_pgm(ruta+"/../maps/mapa1.pgm", byteorder='<')
         self.map=np.zeros((166,166))
         self.map[imagen==254]=254
         #Anadimos seguridad 
