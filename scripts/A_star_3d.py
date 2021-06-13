@@ -7,6 +7,7 @@ Created on Sun May 23 12:20:08 2021
 import re
 import rospy
 import time
+import os
 from delivery_uav.srv import planner_srv
 from delivery_uav.msg import planner_route
 from visualization_msgs.msg import Marker
@@ -46,15 +47,16 @@ class Planner:
                             ).reshape((int(height), int(width)))
     def __init__(self):
         self.inicio=time.time()
+        ruta=os.path.dirname(os.path.abspath(__file__))
         # Empezamos comprobando si hemos cambiado el valor de k_seguridad y en caso contrario utilizamos el valor por defecto
         if rospy.has_param('~k_seguridad'):
             k_seguridad = rospy.get_param('~k_seguridad')
         else:
             k_seguridad = 3
         # Leemos los tres mapas que vamos a utilizar para formar el voxelgrid
-        imagen0 = self.read_pgm("mapa0_0.5.pgm", byteorder='<')
-        imagen3 = self.read_pgm("mapa3_0.5.pgm", byteorder='<')
-        imagen6 = self.read_pgm("mapa6_0.5.pgm", byteorder='<')
+        imagen0 = self.read_pgm("/../maps/mapa0_0.5.pgm", byteorder='<')
+        imagen3 = self.read_pgm("/../maps/mapa3_0.5.pgm", byteorder='<')
+        imagen6 = self.read_pgm("/../maps/mapa6_0.5.pgm", byteorder='<')
         #Generamos una matriz de ceros donde guardaremos el mapa
         self.map=np.zeros((100,100,8))
         #Ahora comprobamos los mapas leidos y en caso de que alguna coordenada este libre(254) se copia en nuestro mapa, esto lo

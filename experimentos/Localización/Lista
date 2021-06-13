@@ -1,6 +1,4 @@
 Modelo base:
-q_alt = 5, q_gps = 1, r=0.5 (modelo), speed_cov_adj = 10
-Punto destino: [-3,2,3]
 
 En la mu:
 - [x,y] usan modelo odom o T (bueno), medida GPS (buena)
@@ -11,3 +9,48 @@ Para el modelo ya tenemos la covarianza de la odometría
 
 Experimentos: 
 Comparar con /ual/odom y /uav_ground_truth
+
+Sin T, 
+Observar Kt entre 0.2 y 0.8
+Las covarianzas de ICP están alrededor de 5E-5
+con q_alt = 1E-6 toma la Z de la medida directamente
+
+con q_gps = 1E-2 funciona perfecto, pero la deriva no se corrige respecto a la posición real (exp 1)
+con q_gps = 1E-4 va bien el filtro (exp 2)
+con q_gps = 1E-6 (o 1E-5) es ruidoso (sólo GPS) y se parece más a UAL (exp 3)
+
+La idea del GPS es corregir la deriva, pero para estos errores tan grandes no lo haria bien
+
+la sigma da de media un 3e-5 y no pasa de 5e-5, excepto cuando en ese instante 
+no logra hacer icp
+Si hay muchos fallos al hacer icp, se deriva la medida de la misma forma que las veces
+cuando al despegar la x,y se va fuera
+
+
+
+
+Puntos para la prueba: [-3,2,3] y [-4,6,3]
+
+
+
+
+
+(exp 1T) Con T, fijo r=1e-5 y le doy q_gps = 1e-3
+Bueno, no está tan mal pero no es tan bueno como con odom
+El problema es que tiene derivas que no logramos corregir... Prueba ahora con menor cov a gps
+
+Lo que sí es cierto es que al final, más o menos, acaba convergiendo
+En este caso la Kt es de 0.1
+Con q_gps = 1e-3 tendría una simulación muy parecida, con Kt = 0.09
+
+
+(exp 2T) q_gps = 1e-4
+Kt = 0.27
+Con este valor ya se fía mucho más del GPS , pero el gps es regulero respecto a la posición real
+Ademaás, es una señal que puede ser muy ruidosa
+
+
+(exp 3T) q_gps = 3e-4
+Kt = 0.16, se fia bastante del gps tambien
+Lo que si parece es que es algo menos ruidosa la señal...?
+

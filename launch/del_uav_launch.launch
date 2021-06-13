@@ -1,0 +1,121 @@
+<launch>
+
+    <arg name="ns_prefix" default="uav_"/>
+
+    <arg name="ual_server" default="on"/>
+    <arg name="ual_pub_rate" default="30.0"/>
+
+    <arg name="mode" default="sitl"/>
+    <arg name="robot_model" default="mbzirc"/>
+
+    <arg name="pose_frame_id" default="map"/><!-- To publish ual/pose in other frame than local, e.g. map -->
+    <arg name="mavros_offboard_rate" default="30.0"/>
+    <arg name="position_th" default="0.33"/>
+    <arg name="orientation_th" default="0.65"/>
+    <arg name="hold_pose_time" default="3.0"/>
+
+    <!-- initial spawn pose for the uav-->
+    <arg name="initial_x" default="0.0"/>
+    <arg name="initial_y" default="0.0"/>
+    <arg name="initial_z" default="0.0"/>
+
+    <group if="$(eval mode=='sitl')">
+        <!-- Launch Gazebo simulation -->
+        <rosparam param="/use_sim_time">true</rosparam>
+        <node pkg="px4_bringup" type="launch_gzworld.py" name="gazebo_world" output="screen"
+        args="-physics=ode -world=$(find delivery_uav)/worlds/Lab_sinpalo_semimuros.world -description_package=delivery_uav">
+            <rosparam param="sim_origin">[37.558542, -5.931074, 7.89]</rosparam><!-- [lat,lon,alt] -->
+        </node>
+    </group>
+
+    <!-- Launch robots. Argument mode can be:
+        - sitl: for software in the loop simulation
+        - serial: for serial connection to px4
+        - custom: to fully customize fcu and gcs urls
+    -->
+    <!-- Launch robot id=1 -->
+    <include file="$(find px4_bringup)/launch/spawn_robot.launch">
+    	<arg name="description_package" value="delivery_uav"/>
+        <arg name="id" value="1"/>
+        <arg name="material" value="Orange"/>
+        <arg name="mode" value="$(arg mode)"/>
+        <arg name="x" value="$(arg initial_x)"/>
+        <arg name="y" value="$(arg initial_y)"/>
+        <arg name="z" value="$(arg initial_z)"/>
+        <arg name="yaw" value="0"/>
+        <arg name="robot_model" value="$(arg robot_model)"/>
+    </include>
+
+
+
+    <!-- Launch UAL server for uav id=1 -->
+    <node pkg="ual_backend_mavros" type="ual_backend_mavros_server" name="ual" output="screen">
+        <param name="uav_id" value="1"/>
+        <param name="ual_server" value="$(arg ual_server)"/>
+        <param name="ual_pub_rate" value="$(arg ual_pub_rate)"/>
+        <param name="mavros_offboard_rate" value="$(arg mavros_offboard_rate)"/>
+        <param name="position_th" value="$(arg position_th)"/>
+        <param name="orientation_th" value="$(arg orientation_th)"/>
+        <param name="hold_pose_time" value="$(arg hold_pose_time)"/>
+        <param name="pose_frame_id" value="$(arg pose_frame_id)"/>
+        <param name="home_pose_parent_frame" value="map"/><!-- default= map -->
+        <!-- Define home pose relative to global map frame -->
+        <rosparam param="home_pose">[0, 0, 0]</rosparam><!-- [x,y,z] -->
+        <!-- Define the global map frame geo position and let the UAL estimate the relative home pose -->
+        <!-- <rosparam param="map_origin_geo">[37.558542, -5.931074, 7.89]</rosparam> --><!-- [lat,lon,alt] -->
+    </node>
+
+    <!-- debug con RViz-->
+    <include file="$(find delivery_uav)/launch/visualize.launch">
+        <arg name="load_map" value="1"/>
+        <arg name="map_name" value="mapa1.yaml"/>
+    </include>
+
+    <!-- iniciamos el nodo central -->
+    <node pkg="delivery_uav" type="central_node.py" name="central" output="screen" >
+        <!-- posicion inicial del UAV -->
+        <rosparam param="sim_origin">[0.0, 0.0, 0.0]</rosparam><!-- [X,Y,Z] -->
+    </node>
+
+    <!-- iniciamos el nodo del localizador -->
+    <node pkg="delivery_uav" type="KF_node.py" name="localization" output="screen" >
+        <!-- posicion inicial del UAV -->
+        <rosparam param="sim_origin">[0.0, 0.0, 0.0]</rosparam><!-- [X,Y,Z] -->
+    </node>
+
+        <!-- iniciamos el nodo encargado de la odometria usando lidar -->
+    <node pkg="rtabmap_ros" type="icp_odometry" name='icp_odometry' args="load rtabmap_ros/icp_odometry camera_nodelet_manager" output="log">
+        <remap from="scan_cloud"      to="/del_uav/uav_laser_scan"/>
+	  
+        <param name="frame_id"        type="string" value="lidar_base"/>   
+        <param name="scan_normal_k"   type="int" value="10"/>     
+        <param name="scan_normal_radius"   type="int" value="0"/>   
+
+        <!-- ejecutar en consola:
+        rosrun rtabmap_ros icp_odometry - -params 
+        con las barritas juntas 
+        para tener lista de los parametros-->
+       
+        <param name="Icp/PointToPlane"  type="string" value="true"/>
+        <param name="Icp/VoxelSize"     type="string" value="0"/>
+        <param name="Icp/PM"            type="string" value="false"/>
+        <param name="Icp/PMOutlierRatio" type="string" value="0.65"/>
+        <param name="Odom/GuessMotion"  type="string" value="true"/>
+        <param name="Odom/ResetCountdown"  type="string" value="1"/>
+        <param name="Reg/Strategy"  type="string" value="1"/>
+        <param name="OdomF2M/BundleAdjustment"  type="string" value="0"/>
+    </node>
+
+    <!-- iniciamos el nodo del controlador -->
+    <node pkg="delivery_uav" type="controller_node.py" name="control" output="screen" >
+    </node>
+
+    <!-- iniciamos el nodo del planificador -->
+    <node pkg="delivery_uav" type="A_star_3d.py" name="planner" output="screen" >
+    </node>
+
+    <!-- iniciamos el nodo del gripper -->
+    <node pkg="delivery_uav" type="gripper_node.py" name="gripper" output="screen" >
+    </node>
+
+</launch>

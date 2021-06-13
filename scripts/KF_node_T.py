@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 # Messages
 from geometry_msgs.msg import Pose, Twist, Point, Vector3, Transform # Messages for the measurements and for T
 from nav_msgs.msg import Odometry # Message for ICP odometry
@@ -40,15 +41,14 @@ class Loc_KF:
         # GPS measurements
         self.gps_sub = rospy.Subscriber("/mavros/global_position/local", Odometry, self.gps_callback)
         self.gps_pose = Pose() # Object where the measured position goes to
-        self.gps_twist = Twist() # Object where the measured twist goes to
         
         # Altimeter measurements
         self.alt_sub = rospy.Subscriber("/mavros/altitude", Altitude, self.alt_callback)
         self.alt_value = 0.0 # Variable where we save the measurement
         
         # Topic needed to find ICP transformation matrix
-        #self.T_sub = rospy.Subscriber("/odom_info", OdomInfo, self.T_callback)
-        #self.T = np.diag(np.ones(4)) # Initial value for T
+        self.T_sub = rospy.Subscriber("/odom_info", OdomInfo, self.T_callback)
+        self.T = np.diag(np.ones(4)) # Initial value for T
 
         print("[KF] Sub topics OK")
 
@@ -68,54 +68,53 @@ class Loc_KF:
 
         # INITIAL VALUES FOR KF OPERATION
         # Mu will consist of the position and speed values of the UAV. They are known values at t=0
-        self.mu = sim_origin
-        self.mu = np.append(self.mu, [0.0,0.0,0.0])    
+        self.mu = sim_origin  
         self.mu_p = self.mu 
 
         # initial odometry value, in case a measurement has not been received yet
         self.odom_data = self.mu
-        self.odom_cov = np.ones(6)
+        self.odom_cov = np.ones(3)
         
 
         # sigma, Q_gps -> given by odom & sensors
         # sigma is just initialized and its value comes directly from ICP odometry
-        self.sigma = np.zeros([6,6]) # since we know the initial position
-        self.sigma_p = np.zeros([6,6])
+        self.sigma = np.zeros([3,3]) # since we know the initial position
+        self.sigma_p = np.zeros([3,3])
 
         # Defined covariance parameters for KF
         q_alt = 1E-6 # q_alt needs to be better than the model and GPS one, nearly doesn't take into account ICP Z prediction (bad)
-        q_gps = 4E-4 # q_gps is quite good, 1E-4 for working KF, higher for better prediction of real position with ICP
-        speed_cov_adj = 10 # estimated speed by GPS is not that good either
+        q_gps = 3E-4 # q_gps is quite good, 1E-4 for working KF, more for better prediction of real position
+        r = 1E-5 # Covariance for the model
 
         # construct Q matrix from q covariances (GPS doesn't provide us with valid values)
-        self.Q = np.diag(q_gps*np.ones(6)) # our GPS covariance
+        self.Q = np.diag(q_gps*np.ones(3)) # our GPS covariance
 
         # The altimeter has a different one
         self.Q[2,2] = q_alt
 
-        # Covariance for GPS twist will be higher
-        self.Q[3,3] = speed_cov_adj*self.Q[3,3]
-        self.Q[4,4] = speed_cov_adj*self.Q[4,4]
-        self.Q[5,5] = speed_cov_adj*self.Q[5,5]
-
         # Observation model
-        self.C = np.eye(6)
+        self.C = np.eye(3)
+
+        # Static model and covariance for our system (since we'll be calculating sigma_p)
+        self.A = np.eye(3)
+        self.R = np.diag(r*np.ones(3))
 
         print("[KF] Init end")
 
 
 
     def Z_upd(self):
-        # Measurements will consist of measured position and calculated speed by GPS
-        self.Z = np.asarray([self.gps_pose.position.x, self.gps_pose.position.y, self.alt_value,
-                            self.gps_twist.linear.x, self.gps_twist.linear.y, self.gps_twist.linear.z])
+        # Measurements will consist of measured position by GPS and altimeter
+        self.Z = np.asarray([self.gps_pose.position.x, self.gps_pose.position.y, self.alt_value])
 
     def KF_pred(self):
-        # (No T version of KF node) rtabmap_ros calculates directly the estimated point from an ICP algorithm
-        # as well as the covariance
-        # We will use the KF to compare to GPS measurements
-        self.mu_p = self.odom_data
-        self.sigma_p = np.diag(self.odom_cov)
+        # (T version of KF node) Based on the transformation matrix provided by rtabmap_ros, we can estimate
+        # the point using T*point(k-1)
+        self.mu_p = np.matmul(self.T, np.append(self.mu[0:3],1))
+        self.mu_p = np.delete(self.mu_p, 3)
+
+        # Sigma will be obtained with a model of our system assuming it's static
+        self.sigma_p = np.linalg.multi_dot([self.A, self.sigma, np.transpose(self.A)]) + self.R # our covariance
 
 
     def KF_act(self):
@@ -123,7 +122,7 @@ class Loc_KF:
         temp = np.linalg.multi_dot([self.C, self.sigma_p, np.transpose(self.C)]) + self.Q
         self.Kt = np.linalg.multi_dot([self.sigma_p, np.transpose(self.C), np.linalg.inv(temp)])
         self.mu = self.mu_p + np.matmul(self.Kt, (self.Z - np.matmul(self.C,self.mu_p)))
-        self.sigma = np.matmul(np.eye(6) - np.matmul(self.Kt, self.C), self.sigma_p)  
+        self.sigma = np.matmul(np.eye(3) - np.matmul(self.Kt, self.C), self.sigma_p)  
 
         # Prints for debugging
         #print("Kt filtro")
@@ -159,19 +158,8 @@ class Loc_KF:
         self.sigma_obj.pos_cov.y = self.sigma[1,1]
         self.sigma_obj.pos_cov.z = self.sigma[2,2]
 
-        # Twist result
-        self.mu_vel_pub_obj.x = self.mu[3]
-        self.mu_vel_pub_obj.y = self.mu[4]
-        self.mu_vel_pub_obj.z = self.mu[5]
-
-        # Twist covariance result
-        self.sigma_obj.vel_cov.x = self.sigma[3,3]
-        self.sigma_obj.vel_cov.y = self.sigma[4,4]
-        self.sigma_obj.vel_cov.z = self.sigma[5,5]
-
         # Publish
         self.mu_pos_pub.publish(self.mu_pos_pub_obj)
-        self.mu_vel_pub.publish(self.mu_vel_pub_obj)
         self.sigma_pub.publish(self.sigma_obj)
         
 
@@ -179,13 +167,12 @@ class Loc_KF:
     def odom_callback(self, data):
         '''Extract data from an nav_msgs/Odometry message'''
         # Instead of defining an object, we'll build the odometry data directly as a numpy array
-        self.odom_data = np.asarray([data.pose.pose.position.x, data.pose.pose.position.y, data.pose.pose.position.z, 
-                                     data.twist.twist.linear.x, data.twist.twist.linear.y, data.twist.twist.linear.z])
+        self.odom_data = np.asarray([data.pose.pose.position.x, data.pose.pose.position.y, data.pose.pose.position.z])
         # Other way: np.reshape
 
         # Since we know the positions of the wanted elements on the covariance array, we'll just extract them
-        self.odom_cov = np.asarray([data.pose.covariance[21], data.pose.covariance[28], data.pose.covariance[35], 
-                                    data.twist.covariance[21], data.twist.covariance[28], data.twist.covariance[35]])
+        self.odom_cov = np.asarray([data.pose.covariance[21], data.pose.covariance[28], data.pose.covariance[35]])
+
         # Debugging prints
         #print(self.odom_cov_pos)
         #print(self.odom_cov_vel)
@@ -193,9 +180,7 @@ class Loc_KF:
     def gps_callback(self, data):
         '''Extract data from GPS'''
         self.gps_pose = data.pose.pose
-        self.gps_twist = data.twist.twist
         self.gps_cov_pos = np.asarray([data.pose.covariance[21], data.pose.covariance[28], data.pose.covariance[35]])
-        self.gps_cov_vel = np.asarray([data.twist.covariance[21], data.twist.covariance[28], data.twist.covariance[35]])
         #print(self.gps_cov_pos)
         #print(self.gps_cov_vel)
 
@@ -203,9 +188,9 @@ class Loc_KF:
         '''Extract data from altimeter'''
         self.alt_value = data.local
         
-    #def T_callback(self, data):
-        #'''Get transformation matrix T when we receive an OdomInfo msg'''
-        #self.T = orh.msg_to_se3(data.transform)
+    def T_callback(self, data):
+        '''Get transformation matrix T when we receive an OdomInfo msg'''
+        self.T = orh.msg_to_se3(data.transform)
         
 
     def ual_callback(self, data):
