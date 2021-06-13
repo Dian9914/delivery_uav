@@ -45,7 +45,7 @@ class Planner:
                             offset=len(header)
                             ).reshape((int(height), int(width)))
     def __init__(self):
-
+        ruta=os.path.dirname(os.path.abspath(__file__))
         # Cargamos el mapa en la variable self.map, que es una matriz de 0 y 1, con 1 identificando al obstaculo
         # El mapa tiene 20 unidades en X y 16 unidades en Y, con origen de coordenadas en la esquina superior izquierda
         imagen = self.read_pgm("/../maps/mapa1.pgm", byteorder='<')
