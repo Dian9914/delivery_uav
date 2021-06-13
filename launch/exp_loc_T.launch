@@ -96,7 +96,7 @@
     <!-- <node pkg="delivery_uav" type="controller_node.py" name="control" output="screen" /> -->
 
     <!-- iniciamos el nodo de localizacion -->
-    <node pkg="delivery_uav" type="KF_node.py" name="localization" output="screen" />
+    <node pkg="delivery_uav" type="KF_node_T.py" name="localization" output="screen" />
 
 
     <!-- iniciamos el nodo encargado de la odometria usando lidar -->
