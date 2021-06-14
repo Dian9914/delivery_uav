@@ -1,7 +1,7 @@
 pos_x = csvread('pos_x.csv',1);
 pos_y = csvread('pos_y.csv',1);
 pos_z = csvread('pos_z.csv',1);
-%cov_x = csvread('cov_x.csv',1);
+cov_x = csvread('cov_x.csv',1);
 
 
 i_x=1; i_y=1; i_z=1;
@@ -26,7 +26,7 @@ KF_pose_x = [pos_x(1:i_x-1,3) pos_x(1:i_x-1,4)];
 KF_pose_y = [pos_y(1:i_y-1,3) pos_y(1:i_y-1,4)];
 KF_pose_z = [pos_z(1:i_z-1,3) pos_z(1:i_z-1,4)];
 
-UAL_pose_x = [pos_x(1:i_x-3,5) pos_x(1:i_x-3,6)];
+UAL_pose_x = [pos_x(1:i_x-2,5) pos_x(1:i_x-2,6)];
 UAL_pose_y = [pos_y(1:i_y-2,5) pos_y(1:i_y-2,6)];
 UAL_pose_z = [pos_z(1:i_z-1,5) pos_z(1:i_z-1,6)];
 
@@ -57,8 +57,6 @@ legend("Posición real","Posición KF", "Posición UAL");
 %xlim([0 100]);
 
 
-return
-
 figure(3)
 plot(ground_truth_z(:,1),ground_truth_z(:,2));
 title("Posición Z del UAV");
@@ -70,7 +68,6 @@ plot(UAL_pose_z(:,1),UAL_pose_z(:,2))
 hold off
 legend("Posición real","Posición KF", "Posición UAL");
 %xlim([0 100]);
-
 
 
 figure(4)
