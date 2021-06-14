@@ -22,7 +22,7 @@ class user_interface_server():
         if rospy.has_param('~sim_origin'):
             sim_origin = rospy.get_param('~sim_origin')
         else:
-            sim_origin = [1.0, 1.0, 0.0]
+            sim_origin = [0.0, 0.0, 0.0]
 
         # Obtenemos el topic de la pose de un parametro de ROS
         if rospy.has_param('~pose_topic'):

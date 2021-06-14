@@ -65,8 +65,8 @@ class controller_server():
         windup_max=3.0
         windup_min=-3.0
 
-        sat_max=3.0
-        sat_min=-3.0
+        sat_max=2.0
+        sat_min=-2.0
 
         # Calculo el error acummulado
         self.x_accumErr += x_err*dt;

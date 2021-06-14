@@ -20,13 +20,12 @@ class Loc_KF:
     def __init__(self):
         # Get initial position from rosparam "sim_origin"
         if rospy.has_param('~sim_origin'):
-            sim_origin = rospy.get_param('~sim_origin')
+            self.sim_origin = rospy.get_param('~sim_origin')
             #sim_origin.append(1.0)
         else:
-            sim_origin = np.asarray([0.0, 0.0, 0.0])
+            self.sim_origin = np.asarray([0.0, 0.0, 0.0])
 
-        sim_origin = np.asarray([0.0, 0.0, 0.0]) # override previous conf ---PENDING TO CHECK LAUNCH FILES----
-
+        
         # SUBSCRIBED TOPICS AND ASSOCIATED VARIABLES
         # UAL state + ICP reset for the failproof check
         self.ual_sub = rospy.Subscriber("/ual/state", State, self.ual_callback)
@@ -68,7 +67,7 @@ class Loc_KF:
 
         # INITIAL VALUES FOR KF OPERATION
         # Mu will consist of the position and speed values of the UAV. They are known values at t=0
-        self.mu = sim_origin
+        self.mu = self.sim_origin
         self.mu = np.append(self.mu, [0.0,0.0,0.0])    
         self.mu_p = self.mu 
 
@@ -103,6 +102,16 @@ class Loc_KF:
 
         print("[KF] Init end")
 
+    def init_icp(self):
+        # initializacion for ICP to initial pose
+        reset_icp_msg = ResetPose._request_class()
+        reset_icp_msg.x = self.sim_origin[0]
+        reset_icp_msg.y = self.sim_origin[1]
+        reset_icp_msg.z = self.sim_origin[2]
+        reset_icp_msg.roll = 0.0
+        reset_icp_msg.pitch = 0.0
+        reset_icp_msg.yaw = 0.0
+        self.reset_icp.single_response(reset_icp_msg)
 
 
     def Z_upd(self):
@@ -241,7 +250,7 @@ if __name__ == '__main__':
         obj = Loc_KF()
 
         rate = rospy.Rate(30) # 30 Hz is the frecuency of MAVROS
-
+        obj.init_icp()
         while not rospy.is_shutdown():
             obj.KF_pred()
             obj.Z_upd()
