@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 from delivery_uav.srv import goto_srv
-from geometry_msgs.msg import PoseStamped, TwistStamped
+from geometry_msgs.msg import PoseStamped, TwistStamped, Point
+from nav_msgs.msg import Odometry
 from uav_abstraction_layer.msg import State
 import rospy
 import time
@@ -49,24 +50,29 @@ class controller_server():
         z_vel = k_z*z_err'''
 
         # SEGUNDA APROXIMACIoN, CONTROL PID
+        # Prueba 1: 0.7, 0.02, 0.2
+        # Prueba 2: 0.7, 0.1, 0.2
+        # Prueba 3: 0.7, 0, 0
+        # Prueba 4: 0.7, 0.01, 0.05
+
         # Parametros de control, hay que ajustar:
-        Kp_x= 0.5
-        Kp_y= 0.5
+        Kp_x= 0.7
+        Kp_y= 0.7
         Kp_z= 0.7
 
-        Ki_x= 0.2
-        Ki_y= 0.2
+        Ki_x= 0 #0.1
+        Ki_y= 0 #0.1
         Ki_z= 0.05
 
-        Kd_x= 0.05
-        Kd_y= 0.05
+        Kd_x= 0
+        Kd_y= 0
         Kd_z= 0.05
 
-        windup_max=3.0
-        windup_min=-3.0
+        windup_max=2.0
+        windup_min=-2.0
 
-        sat_max=2.0
-        sat_min=-2.0
+        sat_max=1.0
+        sat_min=-sat_max
 
         # Calculo el error acummulado
         self.x_accumErr += x_err*dt;
@@ -116,10 +122,6 @@ class controller_server():
         self.z_err_ant = z_err;
 
         # aplicamos el bouncing factor si aplica
-        x_vel=x_vel*self.x_bf
-        y_vel=y_vel*self.y_bf
-        z_vel=z_vel*self.z_bf
-
         if self.x_bf<1:
             self.x_bf = self.x_bf*2;
         if self.y_bf<1:
@@ -127,6 +129,10 @@ class controller_server():
         if self.z_bf<1:
             self.z_bf = self.z_bf*2;
 
+        x_vel=x_vel*self.x_bf
+        y_vel=y_vel*self.y_bf
+        z_vel=z_vel*self.z_bf
+        
         # PUBLICO LA ACCION DE CONTROL
         
         self.act_vel.twist.linear.x=x_vel
@@ -157,7 +163,7 @@ class controller_server():
         self.now_time = time.time()
         dt=self.now_time-past_time
         # Guardamos los datos
-        self.pose = [data.pose.position.x, data.pose.position.y, data.pose.position.z]
+        self.pose = [data.x, data.y, data.z]
         self.pose[0] = round(self.pose[0],3)
         self.pose[1] = round(self.pose[1],3)
         self.pose[2] = round(self.pose[2],3)
@@ -169,9 +175,7 @@ class controller_server():
         # inicializacion de los topic subscribers. En principio solo nos suscribimos al topic de posicion
         self.now_time = time.time()
         try:
-            # IMPORTANTE:
-            # CAMBIAR POR EL TOPIC CORRESPONDIENTE CUANDO EL LOCALIZADOR ESTE IMPLEMENTADO
-            self.pose_subs=rospy.Subscriber("/ual/pose", PoseStamped, self.subscriber_callback)
+            self.pose_subs=rospy.Subscriber("/del_uav/KF_pose", Point, self.subscriber_callback)
         except:
             print('SUBSCRIBER HANDLER [CN]: Unexpected error subscribing to pose topic.')
             return False

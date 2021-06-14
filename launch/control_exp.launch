@@ -64,8 +64,7 @@
         <!-- Define the global map frame geo position and let the UAL estimate the relative home pose -->
         <!-- <rosparam param="map_origin_geo">[37.558542, -5.931074, 7.89]</rosparam> --><!-- [lat,lon,alt] -->
     </node>
-
-    <!-- debug con RViz-->
+   <!-- debug con RViz-->
     <include file="$(find delivery_uav)/launch/visualize.launch">
         <arg name="load_map" value="1"/>
         <arg name="map_name" value="mapa1.yaml"/>
@@ -99,7 +98,6 @@
         <!-- posicion inicial del UAV -->
         <rosparam param="sim_origin">[0.0, 0.0, 0.0]</rosparam><!-- [X,Y,Z] -->
     </node>
-
     <!-- iniciamos el nodo del controlador -->
     <node pkg="delivery_uav" type="controller_node.py" name="control" output="screen" >
     </node>
