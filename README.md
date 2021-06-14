@@ -26,3 +26,12 @@ que permiten al usuario controlar su comportamiento. Estos comandos son:
 * 'drop': Abre la garra una vez el UAV esta estable, dejando caer el paquete.
 * 'gohome': Hace que el UAV vuelva a su posición inicial, siguiendo una ruta segura. Una vez llega allí, aterriza en dicho punto y reinicia el sistema.
 * 'idle': Aborta el movimiento actual. Se debe realizar desde otra terminal y anulará el movimiento una vez se alcance el siguiente waypoint.
+
+Para lanzar el proyecto se puede utilizar el siguiente comando:
+> roslaunch delivery_uav del_uav_launch.launch 
+
+Este comando arrancará todos los nodos correctamente configurados.
+
+## Demostración del comportamiento
+En el siguiente video se puede observar el comportamiento del sistema completo:
+https://drive.google.com/file/d/1Bu8i816bcen4Koo9-Zltdsd-FsrFxJjD/view?usp=sharing
