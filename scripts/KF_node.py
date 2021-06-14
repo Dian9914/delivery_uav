@@ -83,7 +83,8 @@ class Loc_KF:
 
         # Defined covariance parameters for KF
         q_alt = 1E-6 # q_alt needs to be better than the model and GPS one, nearly doesn't take into account ICP Z prediction (bad)
-        q_gps = 4E-4 # q_gps is quite good, 1E-4 for working KF, higher for better prediction of real position with ICP
+        #q_gps = 4E-4 # q_gps is quite good, 1E-4 for working KF, higher for better prediction of real position with ICP
+        q_gps = 1E-5
         speed_cov_adj = 10 # estimated speed by GPS is not that good either
 
         # construct Q matrix from q covariances (GPS doesn't provide us with valid values)
@@ -116,7 +117,9 @@ class Loc_KF:
 
     def Z_upd(self):
         # Measurements will consist of measured position and calculated speed by GPS
-        self.Z = np.asarray([self.gps_pose.position.x, self.gps_pose.position.y, self.alt_value,
+        if ((self.gps_pose.position.x) < 500 and (self.gps_pose.position.y < 500)):
+            #print("Lectura GPS correcta")
+            self.Z = np.asarray([self.gps_pose.position.x, self.gps_pose.position.y, self.alt_value,
                             self.gps_twist.linear.x, self.gps_twist.linear.y, self.gps_twist.linear.z])
 
     def KF_pred(self):
@@ -133,6 +136,9 @@ class Loc_KF:
         self.Kt = np.linalg.multi_dot([self.sigma_p, np.transpose(self.C), np.linalg.inv(temp)])
         self.mu = self.mu_p + np.matmul(self.Kt, (self.Z - np.matmul(self.C,self.mu_p)))
         self.sigma = np.matmul(np.eye(6) - np.matmul(self.Kt, self.C), self.sigma_p)  
+
+        #if abs(self.mu[0]) > 1000:
+            #print("Debug de KF")
 
         # Prints for debugging
         #print("Kt filtro")
@@ -220,7 +226,7 @@ class Loc_KF:
     def ual_callback(self, data):
         ''' Callback for the ICP failproof module'''
         if data.state == 3: # Corresponds to UAV taking off
-            threshold = 0.7
+            threshold = 1.3
             # Check ICP measurement is too far from GPS measurements
             # Since we're taking off, both need to be close to 0
             icp_err = abs(self.odom_data[0] - self.Z[0])
