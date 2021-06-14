@@ -46,7 +46,8 @@ class Planner:
                             offset=len(header)
                             ).reshape((int(height), int(width)))
     def __init__(self):
-        self.inicio=time.time()
+        
+        
         ruta=os.path.dirname(os.path.abspath(__file__))
         # Empezamos comprobando si hemos cambiado el valor de k_seguridad y en caso contrario utilizamos el valor por defecto
         if rospy.has_param('~k_seguridad'):
@@ -146,7 +147,10 @@ class Planner:
         #Valores de offset, depende del tamano del mapa y de la posicion inicial que queramos
         self.offsX=50
         self.offsY=50
-        
+        #Bandera e inicio del tiempo que utilizaremos para ir haciendo print a distintos mesajes
+        self.bandera=1
+        self.inicio=time.time()
+
         start=data.start.xyz
         goal=data.goal.xyz
         
@@ -170,6 +174,7 @@ class Planner:
             print('PLANNER_ERROR: GOAL [%.2f, %.2f, %.2f] IS NOT A VALID POINT, PLEASE TRY AGAIN'%(goal[0],goal[1],goal[2]))
         #En caso de ser valido y mientras la lista abierta no este vacia iteramos
         while meta==1 and not self.lista_abierta==[]:
+            
             # Paso 1: Sacar el primer elemento de la lista abierta, y meterlo en la cerrada
             # El primer elemento de la lista abierta sera aquel de menor f (coste)
             self.lista_cerrada.append(self.lista_abierta[0])  
@@ -276,6 +281,13 @@ class Planner:
             # Paso 5: Ordenar la lista abierta
             # Buscaremos ordenarla por el valor de f de menor a mayor. En caso de empate se coge el valor de h
             self.lista_abierta.sort(key=lambda var: (var.f, var.h)) 
+            self.trabajo=time.time()
+            if (round(self.trabajo-self.inicio)%30==0):
+                if(self.bandera==0):
+                    self.bandera=1
+                    print('PLANNER: WORK IN PROGRESS, PLEASE WAIT')
+            else:
+                self.bandera=0
             #print(self.lista_abierta)
         ## --FIN DEL BUCLE--
         # Paso 6: ahora tenemos que obtener los puntos de forma regresiva
@@ -350,7 +362,6 @@ class Planner:
 if __name__ == '__main__':
    try:
         w=rospy.Publisher('/del_uav/path',MarkerArray,queue_size=10)
-        bandera=0
         markerArray=MarkerArray()
         x = Planner() # crea el objeto del tipo Planner con todas las funciones
         x.empezar()
