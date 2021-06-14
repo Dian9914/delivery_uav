@@ -71,6 +71,29 @@
         <arg name="map_name" value="mapa1.yaml"/>
     </include>
 
+     <!-- iniciamos el nodo encargado de la odometria usando lidar -->
+    <node pkg="rtabmap_ros" type="icp_odometry" name='icp_odometry' args="load rtabmap_ros/icp_odometry camera_nodelet_manager" output="log">
+        <remap from="scan_cloud"      to="/del_uav/uav_laser_scan"/>
+	  
+        <param name="frame_id"        type="string" value="lidar_base"/>   
+        <param name="scan_normal_k"   type="int" value="10"/>     
+        <param name="scan_normal_radius"   type="int" value="0"/>   
+
+        <!-- ejecutar en consola:
+        rosrun rtabmap_ros icp_odometry - -params 
+        con las barritas juntas 
+        para tener lista de los parametros-->
+       
+        <param name="Icp/PointToPlane"  type="string" value="true"/>
+        <param name="Icp/VoxelSize"     type="string" value="0"/>
+        <param name="Icp/PM"            type="string" value="false"/>
+        <param name="Icp/PMOutlierRatio" type="string" value="0.65"/>
+        <param name="Odom/GuessMotion"  type="string" value="true"/>
+        <param name="Odom/ResetCountdown"  type="string" value="1"/>
+        <param name="Reg/Strategy"  type="string" value="1"/>
+        <param name="OdomF2M/BundleAdjustment"  type="string" value="0"/>
+    </node>
+
     <!-- iniciamos el nodo del localizador -->
     <node pkg="delivery_uav" type="KF_node.py" name="localization" output="screen" >
         <!-- posicion inicial del UAV -->
@@ -79,6 +102,12 @@
 
     <!-- iniciamos el nodo del controlador -->
     <node pkg="delivery_uav" type="controller_node.py" name="control" output="screen" >
+    </node>
+
+    <!-- iniciamos el nodo central -->
+    <node pkg="delivery_uav" type="central_node.py" name="central" output="screen" >
+        <!-- posicion inicial del UAV -->
+        <rosparam param="sim_origin">[0.0, 0.0, 0.0]</rosparam><!-- [X,Y,Z] -->
     </node>
 
 </launch>

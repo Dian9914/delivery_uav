@@ -15,8 +15,8 @@
     <arg name="hold_pose_time" default="3.0"/>
 
     <!-- initial spawn pose for the uav-->
-    <arg name="initial_x" default="0.0"/>
-    <arg name="initial_y" default="0.0"/>
+    <arg name="initial_x" default="0.5"/>
+    <arg name="initial_y" default="0.5"/>
     <arg name="initial_z" default="0.0"/>
 
     <group if="$(eval mode=='sitl')">
@@ -60,7 +60,7 @@
         <param name="pose_frame_id" value="$(arg pose_frame_id)"/>
         <param name="home_pose_parent_frame" value="map"/><!-- default= map -->
         <!-- Define home pose relative to global map frame -->
-        <rosparam param="home_pose">[0, 0, 0]</rosparam><!-- [x,y,z] -->
+        <rosparam param="home_pose">[0.5, 0.5, 0]</rosparam><!-- [x,y,z] -->
         <!-- Define the global map frame geo position and let the UAL estimate the relative home pose -->
         <!-- <rosparam param="map_origin_geo">[37.558542, -5.931074, 7.89]</rosparam> --><!-- [lat,lon,alt] -->
     </node>
@@ -74,13 +74,14 @@
     <!-- iniciamos el nodo central -->
     <node pkg="delivery_uav" type="central_node.py" name="central" output="screen" >
         <!-- posicion inicial del UAV -->
-        <rosparam param="sim_origin">[0.0, 0.0, 0.0]</rosparam><!-- [X,Y,Z] -->
+        <rosparam param="sim_origin">[0.5, 0.5, 0.0]</rosparam><!-- [X,Y,Z] -->
+        <rosparam param="pose_topic">'/del_uav/KF_pose'</rosparam><!-- [X,Y,Z] -->
     </node>
 
     <!-- iniciamos el nodo del localizador -->
     <node pkg="delivery_uav" type="KF_node.py" name="localization" output="screen" >
         <!-- posicion inicial del UAV -->
-        <rosparam param="sim_origin">[0.0, 0.0, 0.0]</rosparam><!-- [X,Y,Z] -->
+        <rosparam param="sim_origin">[0.5, 0.5, 0.0]</rosparam><!-- [X,Y,Z] -->
     </node>
 
         <!-- iniciamos el nodo encargado de la odometria usando lidar -->

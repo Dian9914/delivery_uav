@@ -8,7 +8,7 @@ from delivery_uav.msg import gripper_state, waypoint, planner_route
 from uav_abstraction_layer.srv import GoToWaypoint, Land, TakeOff
 from uav_abstraction_layer.msg import State
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Point
 
 # importamos las librerias necesarias
 import rospy
@@ -21,9 +21,14 @@ class user_interface_server():
         # Obtenemos la posicion inicial de un parametro de ROS
         if rospy.has_param('~sim_origin'):
             sim_origin = rospy.get_param('~sim_origin')
-            #sim_origin.append(1.0)
         else:
             sim_origin = [1.0, 1.0, 0.0]
+
+        # Obtenemos el topic de la pose de un parametro de ROS
+        if rospy.has_param('~pose_topic'):
+            self.pose_topic = rospy.get_param('~pose_topic')
+        else:
+            self.pose_topic = '/ual/pose'
 
         self.home = [sim_origin[0], sim_origin[1], 3.0]   #punto "casa" que consideramos nuestra posicion inicial
         self.trayectory = []        #matriz donde se guardara la trayectoria dada por el planner
@@ -93,17 +98,21 @@ class user_interface_server():
 
     def subscriber_callback(self, data):
         # metodo encargado de leer la posicion
-        self.pose = [data.pose.position.x, data.pose.position.y, data.pose.position.z]
+        if self.pose_topic=='/ual/pose':
+            self.pose = [data.pose.position.x, data.pose.position.y, data.pose.position.z]
+        else:
+            self.pose = [data.x, data.y, data.z]
         self.pose[0] = round(self.pose[0],1)
         self.pose[1] = round(self.pose[1],1)
         self.pose[2] = round(self.pose[2],1)
 
     def start_subscriber(self):
         # inicializacion de los topic subscribers. En principio solo nos suscribimos al topic de posicion
-        try:
-            # IMPORTANTE:
-            # CAMBIAR POR EL TOPIC CORRESPONDIENTE CUANDO EL LOCALIZADOR ESTE IMPLEMENTADO
-            self.pose_subs=rospy.Subscriber("/ual/pose", PoseStamped, self.subscriber_callback)
+        try:   
+            if self.pose_topic=='/ual/pose':
+                self.pose_subs=rospy.Subscriber(self.pose_topic, PoseStamped, self.subscriber_callback)
+            else:
+                self.pose_subs=rospy.Subscriber(self.pose_topic, Point, self.subscriber_callback)
         except:
             print('SUBSCRIBER HANDLER [CN]: Unexpected error subscribing to pose topic.')
             return False

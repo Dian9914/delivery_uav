@@ -52,7 +52,7 @@ class Planner:
             k_seguridad = rospy.get_param('~k_seguridad')
         else:
             k_seguridad = 3
-        imagen = self.read_pgm("/../maps/mapa3.pgm", byteorder='<')
+        imagen = self.read_pgm(ruta+"/../maps/mapa3.pgm", byteorder='<')
         self.map=np.zeros((166,166))
         self.map[imagen==254]=254
         #Anadimos seguridad 

@@ -54,9 +54,9 @@ class Planner:
         else:
             k_seguridad = 3
         # Leemos los tres mapas que vamos a utilizar para formar el voxelgrid
-        imagen0 = self.read_pgm("/../maps/mapa0_0.5.pgm", byteorder='<')
-        imagen3 = self.read_pgm("/../maps/mapa3_0.5.pgm", byteorder='<')
-        imagen6 = self.read_pgm("/../maps/mapa6_0.5.pgm", byteorder='<')
+        imagen0 = self.read_pgm(ruta+"/../maps/mapa0_0.5.pgm", byteorder='<')
+        imagen3 = self.read_pgm(ruta+"/../maps/mapa3_0.5.pgm", byteorder='<')
+        imagen6 = self.read_pgm(ruta+"/../maps/mapa6_0.5.pgm", byteorder='<')
         #Generamos una matriz de ceros donde guardaremos el mapa
         self.map=np.zeros((100,100,8))
         #Ahora comprobamos los mapas leidos y en caso de que alguna coordenada este libre(254) se copia en nuestro mapa, esto lo
@@ -167,7 +167,7 @@ class Planner:
             print('PLANNER: PLANNING PATHING, THIS MAY TAKE A WHILE')
         else:
             meta=0
-            print('PLANNER_ERROR: GOAL' + goal + ' IS NOT A VALID POINT, PLEASE TRY AGAIN')
+            print('PLANNER_ERROR: GOAL [%.2f, %.2f, %.2f] IS NOT A VALID POINT, PLEASE TRY AGAIN'%(goal[0],goal[1],goal[2]))
         #En caso de ser valido y mientras la lista abierta no este vacia iteramos
         while meta==1 and not self.lista_abierta==[]:
             # Paso 1: Sacar el primer elemento de la lista abierta, y meterlo en la cerrada

@@ -197,7 +197,7 @@ class controller_server():
             self.x_ref=req.waypoint.pose.position.x
             self.y_ref=req.waypoint.pose.position.y
             self.z_ref=req.waypoint.pose.position.z
-            print("CONTROLLER NODE: Going to new coordinates: [%d, %d, %d]."%(self.x_ref,self.y_ref,self.z_ref))
+            print("CONTROLLER NODE: Going to new coordinates: [%.2f, %.2f, %.2f]."%(self.x_ref,self.y_ref,self.z_ref))
         else:
             print("CONTROLLER NODE: Incorrect coordinates")
             return False
