@@ -1,23 +1,23 @@
 # delivery_uav
  Proyecto para Robotica Avanzada (GITI) / Ampliación de Robótica (GIERM)
+ 
+## Instalación
+Versión de ubuntu 16.04 / ROS kinetic
+ * Instalar ROS: http://wiki.ros.org/es/ROS/Installation
+ * Instalar UAL: https://github.com/grvcTeam/grvc-ual/tree/master/uav_abstraction_layer
+ * Instalar dependencias necesarias:
+   - numpy
+   - threading
+   - ros_numpy
+   - joint state publisher
+   - find object 2d
+   - rtabmap y rtabmap_ros
+   - plc, plc_ros y python_plc
+   - open3d
+   - open3d_ros_helper
+   - octomap y octomap_server (opcional para representación de mapas 3D)
+   - map_server
 
-## Objetivos
- * Uso de un UAV para soltar una carga en una ubicación deseada.
- * El UAV y su control vendrán dados por el paquete grvc-ual de ROS.
- * Ubicación mediante el uso de técnicas SLAM y un mapa predefinido, con opción de incorporar GPS en el futuro.
- * Incorporación de técnicas de percepción para reaccionar a cambios en el entorno, junto a un altímetro.
-
-El UAV debe ser capaz de soltar la carga en un punto dado con seguridad.
-
-## Pasos a seguir
- * Instalar y aprender a usar grvc UAL. DONE
- * Crear/encontrar entorno de simulación.
- * Instalar y aprender a usar LIDAR.
- * Buscar como simular el paquete.
- * Crear actuador para descargar el paquete.
- * Montarlo todo en un UAV.
- * Planificación, mapa y SLAM.
- * Percepción y reacción al entorno.
-
-*Memoria:* https://www.overleaf.com/9276811915dkmgjbqhfcdw
+ * Clonar paquete rtabmap_ros al workspace: http://wiki.ros.org/rtabmap_ros
+ 
 
